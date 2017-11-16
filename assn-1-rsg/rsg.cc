@@ -39,8 +39,29 @@ static void readGrammar(ifstream& infile, map<string, Definition>& grammar)
   }
 }
 
+void expandIfHasNonterminals(const map<string, Definition>& grammar, vector<string> &toExpand) {
+  bool hasNonterminals = false;
+  vector<string> expanded;
+  for (vector<string>::const_iterator itr = toExpand.begin(); itr != toExpand.end(); ++itr)  {
+    map<string, Definition>::const_iterator def = grammar.find(*itr);
+      if (def != grammar.end()) {
+	hasNonterminals = true;
+	Production prod = def->second.getRandomProduction();
+        for (Production::iterator curr = prod.begin(); curr != prod.end(); ++curr) {
+	  expanded.push_back(*curr);
+	}
+      } else {
+	expanded.push_back(*itr);
+      }
+  }
+  toExpand = expanded;
+  if (hasNonterminals) {
+    expandIfHasNonterminals(grammar, toExpand);
+  }
+}
+
 /**
- * Performs the rudimentary error checking needed to confirm that
+ * performs the rudimentary error checking needed to confirm that
  * the client provided a grammar file.  It then continues to
  * open the file, read the grammar into a map<string, Definition>,
  * and then print out the total number of Definitions that were read
@@ -72,8 +93,19 @@ int main(int argc, char *argv[])
   // things are looking good...
   map<string, Definition> grammar;
   readGrammar(grammarFile, grammar);
-  cout << "The grammar file called \"" << argv[1] << "\" contains "
-       << grammar.size() << " definitions." << endl;
+
+  for (int i=1; i<4; ++i) {
+    vector<string> v;
+    v.push_back("<start>");
+    expandIfHasNonterminals(grammar, v);
+
+    cout << "Version #" << i << ": ----" << endl;
+    cout << "    ";
+    for (vector<string>::const_iterator itr = v.begin(); itr != v.end(); ++itr)  {
+      cout <<  *itr << " ";
+    }
+    cout << endl << endl;
+  }
   
   return 0;
 }
