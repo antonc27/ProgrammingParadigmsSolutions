@@ -1,8 +1,10 @@
 #ifndef __imdb_utils__
 #define __imdb_utils__
 
+#include <cstdlib>
 #include <vector>
 #include <string>
+#include <strings.h>
 #include <iostream>
 using namespace std;
 
@@ -43,7 +45,7 @@ struct film {
   
   bool operator<(const film& rhs) const { 
     return this->title < rhs.title || 
-           this->title == rhs.title && this->year < rhs.year; 
+      (this->title == rhs.title && this->year < rhs.year); 
   }
 };
 
