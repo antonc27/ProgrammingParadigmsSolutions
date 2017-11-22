@@ -33,12 +33,12 @@ int actorCmp(const void *first, const void *second)
 
 bool imdb::getCredits(const string& player, vector<film>& films) const
 {
-  int size = *(int *)actorFile;
-  cout << size;
+  int totalSize = *(int *)actorFile;
+  cout << totalSize;
 
   void *firstActor = (int *)actorFile + 1;
 
-  void *p = bsearch(player.c_str(), firstActor, 1, sizeof(int), actorCmp);
+  void *p = bsearch(player.c_str(), firstActor, totalSize, sizeof(int), actorCmp);
   
   return false;
 }
