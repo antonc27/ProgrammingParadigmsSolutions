@@ -4,6 +4,7 @@ using namespace std;
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include "imdb.h"
 
 const char *const imdb::kActorFileName = "actordata";
@@ -24,8 +25,24 @@ bool imdb::good() const
 	    (movieInfo.fd == -1) ); 
 }
 
-// you should be implementing these two methods right here... 
-bool imdb::getCredits(const string& player, vector<film>& films) const { return false; }
+int actorCmp(const void *first, const void *second)
+{
+  return 0;
+}
+
+
+bool imdb::getCredits(const string& player, vector<film>& films) const
+{
+  int size = *(int *)actorFile;
+  cout << size;
+
+  void *firstActor = (int *)actorFile + 1;
+
+  void *p = bsearch(player.c_str(), firstActor, 1, sizeof(int), actorCmp);
+  
+  return false;
+}
+
 bool imdb::getCast(const film& movie, vector<string>& players) const { return false; }
 
 imdb::~imdb()
