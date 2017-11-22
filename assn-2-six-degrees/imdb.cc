@@ -25,20 +25,28 @@ bool imdb::good() const
 	    (movieInfo.fd == -1) ); 
 }
 
+struct actorWrap {
+  const char *actorName;
+  const void *actors;
+};
+
 int actorCmp(const void *first, const void *second)
 {
   return 0;
 }
 
-
 bool imdb::getCredits(const string& player, vector<film>& films) const
 {
   int totalSize = *(int *)actorFile;
-  cout << totalSize;
+  cout << totalSize << endl;
 
   void *firstActor = (int *)actorFile + 1;
+  
+  actorWrap wrap;
+  wrap.actorName = player.c_str();
+  wrap.actors = actorFile;
 
-  void *p = bsearch(player.c_str(), firstActor, totalSize, sizeof(int), actorCmp);
+  void *p = bsearch(&wrap, firstActor, totalSize, sizeof(int), actorCmp);
   
   return false;
 }
