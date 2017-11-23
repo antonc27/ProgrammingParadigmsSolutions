@@ -32,14 +32,16 @@ struct actorWrap {
 
 int actorCmp(const void *first, const void *second)
 {
+  const char *actorName = ((actorWrap *)first)->actorName;
+  const void *actors = ((actorWrap *)first)->actors;
+  
   return 0;
 }
 
 bool imdb::getCredits(const string& player, vector<film>& films) const
 {
   int totalSize = *(int *)actorFile;
-  cout << totalSize << endl;
-
+  
   void *firstActor = (int *)actorFile + 1;
   
   actorWrap wrap;
