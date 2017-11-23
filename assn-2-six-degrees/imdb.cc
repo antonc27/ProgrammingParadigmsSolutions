@@ -6,6 +6,7 @@ using namespace std;
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "imdb.h"
 
 const char *const imdb::kActorFileName = "actordata";
@@ -67,6 +68,13 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
     int actorNamePadding = (actorNameLen % 2 == 0) ? 0 : 1;
     short *moviesSize = (short *)((char *)actorName + actorNameLen + actorNamePadding);
     cout << *moviesSize << endl;
+      
+    assert(sizeof(short) == 2);
+    size_t moviesSizeLen = actorNameLen + actorNamePadding + 2;
+    int moviesSizePadding = (moviesSizeLen % 4 == 0) ? 0 : 2;
+      
+    int *startOfMoviesArr = (int *)((char *)actorName + moviesSizeLen + moviesSizePadding);
+    cout << *startOfMoviesArr << endl;
   }
   
   return (found != NULL);
