@@ -78,7 +78,11 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
     for (int i = 0; i < moviesSize; i++) {
       int movieOffset = startOfMoviesArr[i];
       char *movieName = (char *)movieFile + movieOffset;
-      cout << movieName << "; ";
+      cout << movieName;
+
+      size_t movieNameLen = strlen(movieName) + 1;
+      int year = *(movieName + movieNameLen) + 1900;
+      cout << " (" << year << "); ";
     }
     cout << endl;
   }
