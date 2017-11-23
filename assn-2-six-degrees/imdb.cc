@@ -31,7 +31,7 @@ struct actorWrap {
   const void *actors;
 };
 
-const char *actorName(const void *base, const void *offset)
+const char *actorNameFromOffset(const void *base, const void *offset)
 {
   int realOffset = *(int *)offset;
   return ((char *)base + realOffset);
@@ -42,7 +42,7 @@ int actorCmp(const void *first, const void *second)
   const char *actorName = ((actorWrap *)first)->actorName;
   const void *actors = ((actorWrap *)first)->actors;
 
-  const char *anotherActorName = actorName(actors, second);
+  const char *anotherActorName = actorNameFromOffset(actors, second);
   
   return strcmp(actorName, anotherActorName);
 }
@@ -57,13 +57,13 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
   wrap.actorName = player.c_str();
   wrap.actors = actorFile;
 
-  void *p = bsearch(&wrap, firstActor, totalSize, sizeof(int), actorCmp);
+  void *found = bsearch(&wrap, firstActor, totalSize, sizeof(int), actorCmp);
 
-  if (p != NULL) {
-    cout << actorName(actorFile, p) << endl;
+  if (found != NULL) {
+    cout << actorNameFromOffset(actorFile, found) << endl;
   }
   
-  return false;
+  return (found != NULL);
 }
 
 bool imdb::getCast(const film& movie, vector<string>& players) const { return false; }
