@@ -5,6 +5,7 @@ using namespace std;
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include "imdb.h"
 
 const char *const imdb::kActorFileName = "actordata";
@@ -34,8 +35,11 @@ int actorCmp(const void *first, const void *second)
 {
   const char *actorName = ((actorWrap *)first)->actorName;
   const void *actors = ((actorWrap *)first)->actors;
+
+  int offset = *(int *)second;
+  const char *anotherActorName = (const char *)((char *)actors + offset);
   
-  return 0;
+  return strcmp(actorName, anotherActorName);
 }
 
 bool imdb::getCredits(const string& player, vector<film>& films) const
@@ -49,6 +53,12 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
   wrap.actors = actorFile;
 
   void *p = bsearch(&wrap, firstActor, totalSize, sizeof(int), actorCmp);
+
+  if (p != NULL) {
+    int offset = *(int *)p;
+    const char *a = (const char *)((char *)actorFile + offset);
+    cout << a << endl;
+  }
   
   return false;
 }
