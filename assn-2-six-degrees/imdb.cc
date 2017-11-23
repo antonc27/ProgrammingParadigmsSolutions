@@ -60,7 +60,13 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
   void *found = bsearch(&wrap, firstActor, totalSize, sizeof(int), actorCmp);
 
   if (found != NULL) {
-    cout << actorNameFromOffset(actorFile, found) << endl;
+    const char *actorName = actorNameFromOffset(actorFile, found);
+    cout << actorName << endl;
+      
+    size_t actorNameLen = strlen(actorName) + 1;
+    int actorNamePadding = (actorNameLen % 2 == 0) ? 0 : 1;
+    short *moviesSize = (short *)((char *)actorName + actorNameLen + actorNamePadding);
+    cout << *moviesSize << endl;
   }
   
   return (found != NULL);
