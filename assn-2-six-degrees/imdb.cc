@@ -103,6 +103,23 @@ struct movieWrap {
   const void *movies;
 };
 
+int movieCmp(const void *first, const void *second)
+{
+  film movie = *((movieWrap *)first)->movie;
+  const void *movies = ((movieWrap *)first)->movies;
+
+  film anotherMovie;
+  fillMovieFromOffset(&anotherMovie, movies, second);
+
+  if (movie == anotherMovie) {
+    return 0;
+  } else if (movie < anotherMovie) {
+    return -1;
+  } else {
+    return 1;
+  }
+}
+
 bool imdb::getCast(const film& movie, vector<string>& players) const
 {
   return false;
