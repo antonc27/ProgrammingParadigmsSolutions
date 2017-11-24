@@ -48,35 +48,33 @@ int actorCmp(const void *first, const void *second)
   return strcmp(actorName, anotherActorName);
 }
 
-const movie *movieFromOffset(const void *base\
-			     , const void *offset)
+void fillMovieFromOffset(film *movie, const void *base, const void *offset)
 {
-  int movieOffset = (int *)offset;//startOfMoviesArr[i];
-  char *movieName = (char *)base + movi\
-    eOffset;
+  int movieOffset = *(int *)offset;
+  char *movieName = (char *)base + movieOffset;
 
-  size_t movieNameLen = strlen(movieName) + \
-    1;
-  int year = *(movieName + movieNameLen) + 1	\
-    900;
+  size_t movieNameLen = strlen(movieName) + 1;
+  int year = *(movieName + movieNameLen) + 1900;
 
-  film movie;
-  movie.title = movieName;
-  movie.year = year;
-  return &movie;
+  movie->title = movieName;
+  movie->year = year;
+}
+
+void *findActor(const string& player, const void *base)
+{
+  int totalSize = *(int *)base;
+  void *firstActor = (int *)base + 1;
+  
+  actorWrap wrap;
+  wrap.actorName = player.c_str();
+  wrap.actors = base;
+
+  return bsearch(&wrap, firstActor, totalSize, sizeof(int), actorCmp);
 }
 
 bool imdb::getCredits(const string& player, vector<film>& films) const
 {
-  int totalSize = *(int *)actorFile;
-  
-  void *firstActor = (int *)actorFile + 1;
-  
-  actorWrap wrap;
-  wrap.actorName = player.c_str();
-  wrap.actors = actorFile;
-
-  void *found = bsearch(&wrap, firstActor, totalSize, sizeof(int), actorCmp);
+  void *found = findActor(player, actorFile);
 
   if (found != NULL) {
     const char *actorName = actorNameFromOffset(actorFile, found);
@@ -91,18 +89,8 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
       
     int *startOfMoviesArr = (int *)((char *)actorName + moviesSizeLen + moviesSizePadding);
     for (int i = 0; i < moviesSize; i++) {
-      /*
-      int movieOffset = startOfMoviesArr[i];
-      char *movieName = (char *)movieFile + movieOffset;
-
-      size_t movieNameLen = strlen(movieName) + 1;
-      int year = *(movieName + movieNameLen) + 1900;
-
       film movie;
-      movie.title = movieName;
-      movie.year = year;
-      */
-      film mobie = 
+      fillMovieFromOffset(&movie, movieFile, startOfMoviesArr + i);
       films.push_back(movie);
     }
   }
