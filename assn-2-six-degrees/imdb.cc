@@ -48,6 +48,24 @@ int actorCmp(const void *first, const void *second)
   return strcmp(actorName, anotherActorName);
 }
 
+const movie *movieFromOffset(const void *base\
+			     , const void *offset)
+{
+  int movieOffset = (int *)offset;//startOfMoviesArr[i];
+  char *movieName = (char *)base + movi\
+    eOffset;
+
+  size_t movieNameLen = strlen(movieName) + \
+    1;
+  int year = *(movieName + movieNameLen) + 1	\
+    900;
+
+  film movie;
+  movie.title = movieName;
+  movie.year = year;
+  return &movie;
+}
+
 bool imdb::getCredits(const string& player, vector<film>& films) const
 {
   int totalSize = *(int *)actorFile;
@@ -73,6 +91,7 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
       
     int *startOfMoviesArr = (int *)((char *)actorName + moviesSizeLen + moviesSizePadding);
     for (int i = 0; i < moviesSize; i++) {
+      /*
       int movieOffset = startOfMoviesArr[i];
       char *movieName = (char *)movieFile + movieOffset;
 
@@ -82,6 +101,8 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
       film movie;
       movie.title = movieName;
       movie.year = year;
+      */
+      film mobie = 
       films.push_back(movie);
     }
   }
