@@ -120,6 +120,18 @@ int movieCmp(const void *first, const void *second)
   }
 }
 
+void *findMovie(const film& movie, const void *base)
+{
+  int totalSize = *(int *)base;
+  void *firstMovie = (int *)base + 1;
+  
+  movieWrap wrap;
+  wrap.movie = &movie;
+  wrap.movies = base;
+
+  return bsearch(&wrap, firstMovie, totalSize, sizeof(int), movieCmp);
+}
+
 bool imdb::getCast(const film& movie, vector<string>& players) const
 {
   return false;
