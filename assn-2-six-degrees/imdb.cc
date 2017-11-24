@@ -98,7 +98,15 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
   return (found != NULL);
 }
 
-bool imdb::getCast(const film& movie, vector<string>& players) const { return false; }
+struct movieWrap {
+  const film *movie;
+  const void *movies;
+};
+
+bool imdb::getCast(const film& movie, vector<string>& players) const
+{
+  return false;
+}
 
 imdb::~imdb()
 {
