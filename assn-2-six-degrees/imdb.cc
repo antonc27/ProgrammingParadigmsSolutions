@@ -48,6 +48,13 @@ int actorCmp(const void *first, const void *second)
   return strcmp(actorName, anotherActorName);
 }
 
+/*
+char *movieNameFromOffset(const void *base, const void *offset)
+{
+  
+}
+*/
+
 void fillMovieFromOffset(film *movie, const void *base, const void *offset)
 {
   int movieOffset = *(int *)offset;
@@ -134,7 +141,14 @@ void *findMovie(const film& movie, const void *base)
 
 bool imdb::getCast(const film& movie, vector<string>& players) const
 {
-  return false;
+  void *found = findMovie(movie, movieFile);
+
+  if (found != NULL) {
+    film movie;
+    fillMovieFromOffset(movie, 
+  }
+  
+  return (found != NULL);
 }
 
 imdb::~imdb()
