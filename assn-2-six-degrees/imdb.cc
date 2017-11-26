@@ -27,6 +27,13 @@ bool imdb::good() const
 	    (movieInfo.fd == -1) ); 
 }
 
+void imdb::checkSizes() const
+{
+    assert(sizeof(char) == 1);
+    assert(sizeof(short) == 2);
+    assert(sizeof(int) == 4);
+}
+
 struct actorWrap {
   const char *actorName;
   const void *actors;
@@ -48,10 +55,15 @@ int actorCmp(const void *first, const void *second)
   return strcmp(actorName, anotherActorName);
 }
 
+const char *movieNameFromOffset(const void *base, const void *offset)
+{
+    int movieOffset = *(int *)offset;
+    return (char *)base + movieOffset;
+}
+
 void fillMovieFromOffset(film *movie, const void *base, const void *offset)
 {
-  int movieOffset = *(int *)offset;
-  char *movieName = (char *)base + movieOffset;
+  const char *movieName = movieNameFromOffset(base, offset);
 
   size_t movieNameLen = strlen(movieName) + 1;
   int year = *(movieName + movieNameLen) + 1900;
@@ -74,6 +86,8 @@ void *findActor(const string& player, const void *base)
 
 bool imdb::getCredits(const string& player, vector<film>& films) const
 {
+  checkSizes();
+    
   void *found = findActor(player, actorFile);
 
   if (found != NULL) {
@@ -82,8 +96,7 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
     size_t actorNameLen = strlen(actorName) + 1;
     int actorNamePadding = (actorNameLen % 2 == 0) ? 0 : 1;
     short moviesSize = *(short *)((char *)actorName + actorNameLen + actorNamePadding);
-      
-    assert(sizeof(short) == 2);
+    
     size_t moviesSizeLen = actorNameLen + actorNamePadding + 2;
     int moviesSizePadding = (moviesSizeLen % 4 == 0) ? 0 : 2;
       
@@ -134,21 +147,17 @@ void *findMovie(const film& movie, const void *base)
 
 bool imdb::getCast(const film& movie, vector<string>& players) const
 {
+  checkSizes();
+    
   void *found = findMovie(movie, movieFile);
 
   if (found != NULL) {
-    const void *offset = found;
-    const void *base = movieFile;
-    
-    int movieOffset = *(int *)offset;
-    char *movieName = (char *)base + movieOffset;
-
+    const char *movieName = movieNameFromOffset(movieFile, found);
     size_t movieNameLen = strlen(movieName) + 1;
         
     int movieYearPadding = ((movieNameLen + 1) % 2 == 0) ? 0 : 1;
     short actorsSize = *(short *)(movieName + movieNameLen + 1 + movieYearPadding);
-
-    assert(sizeof(short) == 2);
+    
     size_t actorsSizeLen = movieNameLen + 1 + movieYearPadding + 2;
     int actorsSizePadding = (actorsSizeLen % 4 == 0) ? 0 : 2;
 

@@ -107,6 +107,8 @@ class imdb {
   imdb(const imdb& original);
   imdb& operator=(const imdb& rhs);
   imdb& operator=(const imdb& rhs) const;
+    
+  void checkSizes() const;
 };
 
 #endif
