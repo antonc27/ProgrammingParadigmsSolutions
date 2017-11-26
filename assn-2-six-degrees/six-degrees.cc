@@ -1,5 +1,5 @@
 #include <vector>
-#include <list>
+#include <queue>
 #include <set>
 #include <string>
 #include <iostream>
@@ -37,6 +37,42 @@ static string promptForActor(const string& prompt, const imdb& db)
   }
 }
 
+static void generateShortestPath(const string& source, const string& target, const imdb& db)
+{
+    queue<path> partialPaths;
+    set<string> previouslySeenActors;
+    set<film> previouslySeenFilms;
+    
+    path startPath = path(source);
+    partialPaths.push(startPath);
+    while (!partialPaths.empty() && partialPaths.front().getLength() <= 5) {
+        path currentPath = partialPaths.front();
+        partialPaths.pop();
+        vector<film> films;
+        db.getCredits(currentPath.getLastPlayer(), films);
+        for (vector<film>::iterator filmItr = films.begin(); filmItr != films.end(); filmItr++) {
+            if (previouslySeenFilms.find(*filmItr) != previouslySeenFilms.end()) {
+                previouslySeenFilms.insert(*filmItr);
+                vector<string> players;
+                db.getCast(*filmItr, players);
+                for (vector<string>::iterator playerItr = players.begin(); playerItr != players.end(); playerItr++) {
+                    if (previouslySeenActors.find(*playerItr) != previouslySeenActors.end()) {
+                        previouslySeenActors.insert(*playerItr);
+                        path newPath = currentPath;
+                        newPath.addConnection(*filmItr, *playerItr);
+                        if (*playerItr == target) {
+                            cout << newPath << endl;
+                        } else {
+                            partialPaths.push(newPath);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    cout << endl << "No path between those two people could be found." << endl << endl;
+}
+
 /**
  * Serves as the main entry point for the six-degrees executable.
  * There are no parameters to speak of.
@@ -54,7 +90,8 @@ static string promptForActor(const string& prompt, const imdb& db)
 
 int main(int argc, const char *argv[])
 {
-  imdb db(determinePathToData(argv[1])); // inlined in imdb-utils.h
+//  imdb db(determinePathToData(argv[1])); // inlined in imdb-utils.h
+  imdb db(determinePathToData("/Users/Nyadesu/Desktop/Courses/ProgrammingParadigms/Projects/assn-2-six-degrees/assn-2-six-degrees-data/little-endian"));
   if (!db.good()) {
     cout << "Failed to properly initialize the imdb database." << endl;
     cout << "Please check to make sure the source files exist and that you have permission to read them." << endl;
@@ -69,8 +106,9 @@ int main(int argc, const char *argv[])
     if (source == target) {
       cout << "Good one.  This is only interesting if you specify two different people." << endl;
     } else {
+      generateShortestPath(source, target, db);
       // replace the following line by a call to your generateShortestPath routine... 
-      cout << endl << "No path between those two people could be found." << endl << endl;
+//      cout << endl << "No path between those two people could be found." << endl << endl;
     }
   }
   
