@@ -51,17 +51,18 @@ static void generateShortestPath(const string& source, const string& target, con
         vector<film> films;
         db.getCredits(currentPath.getLastPlayer(), films);
         for (vector<film>::iterator filmItr = films.begin(); filmItr != films.end(); filmItr++) {
-            if (previouslySeenFilms.find(*filmItr) != previouslySeenFilms.end()) {
+            if (previouslySeenFilms.find(*filmItr) == previouslySeenFilms.end()) {
                 previouslySeenFilms.insert(*filmItr);
                 vector<string> players;
                 db.getCast(*filmItr, players);
                 for (vector<string>::iterator playerItr = players.begin(); playerItr != players.end(); playerItr++) {
-                    if (previouslySeenActors.find(*playerItr) != previouslySeenActors.end()) {
+                    if (previouslySeenActors.find(*playerItr) == previouslySeenActors.end()) {
                         previouslySeenActors.insert(*playerItr);
                         path newPath = currentPath;
                         newPath.addConnection(*filmItr, *playerItr);
                         if (*playerItr == target) {
                             cout << newPath << endl;
+                            return;
                         } else {
                             partialPaths.push(newPath);
                         }
