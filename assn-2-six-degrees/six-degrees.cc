@@ -91,8 +91,7 @@ static void generateShortestPath(const string& source, const string& target, con
 
 int main(int argc, const char *argv[])
 {
-//  imdb db(determinePathToData(argv[1])); // inlined in imdb-utils.h
-  imdb db(determinePathToData("/Users/Nyadesu/Desktop/Courses/ProgrammingParadigms/Projects/assn-2-six-degrees/assn-2-six-degrees-data/little-endian"));
+  imdb db(determinePathToData(argv[1])); // inlined in imdb-utils.h
   if (!db.good()) {
     cout << "Failed to properly initialize the imdb database." << endl;
     cout << "Please check to make sure the source files exist and that you have permission to read them." << endl;
