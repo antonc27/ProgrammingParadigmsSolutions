@@ -62,6 +62,42 @@ void printNode(nodeType *node) {
   }
 }
 
+char *strAppend(char *dst, const char *src) {
+  if (dst == src) return dst;
+  size_t newSize = strlen(dst) + strlen(src);
+  char *newStr = (char *) realloc(dst, sizeof(char) * (newSize + 1));
+  return strcat(newStr, src);
+}
+
+char *ConcatAllRecc(nodeType *list, char *str) {
+  nodeType type = *list;
+  void *content = (char *)list + sizeof(nodeType);
+  switch(type) {
+  case Integer: {
+    return str;
+  }
+  case String: {
+    return strAppend(str, (char *)content);
+  }
+  case List: {
+    nodeType *current = *(nodeType **)content;
+    nodeType *next = *(nodeType **)((char *)content + sizeof(nodeType *));
+    str = ConcatAllRecc(current, str);
+    return ConcatAllRecc(next, str);
+  }
+  case Nil: {
+    return str;
+  }
+  }  
+}
+
+char *ConcatAll(nodeType *list) {
+  char *str = (char *) malloc(sizeof(char));
+  strcpy(str, "");
+  ConcatAllRecc(list, str);
+  return str;
+}
+
 int main() {  
   nodeType *nil = allocNilNode();
 
@@ -77,8 +113,11 @@ int main() {
   nodeType *secondStr = allocStrNode("Yankees");
   nodeType *gameThree = allocListNode(secondStr, list3);
   
-  printNode(gameThree);
-  cout << endl;
+  //printNode(gameThree);
+  //cout << endl;
 
+  cout << ConcatAll(gameThree);
+  cout << endl;
+  
   return 0;
 }
