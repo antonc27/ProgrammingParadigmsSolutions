@@ -94,7 +94,7 @@ char *ConcatAllRecc(nodeType *list, char *str) {
 char *ConcatAll(nodeType *list) {
   char *str = (char *) malloc(sizeof(char));
   strcpy(str, "");
-  ConcatAllRecc(list, str);
+  str = ConcatAllRecc(list, str);
   return str;
 }
 
