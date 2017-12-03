@@ -37,7 +37,7 @@ nodeType *allocNilNode() {
 
 void printNode(nodeType *node) {
   nodeType type = *node;
-  void *content = (char *)node + sizeof(nodeType);
+  void *content = node + 1;
   switch(type) {
   case Integer: {
     cout << *(int *)content;
@@ -48,8 +48,9 @@ void printNode(nodeType *node) {
     break;
   }
   case List: {
-    nodeType *current = *(nodeType **)content;
-    nodeType *next = *(nodeType **)((char *)content + sizeof(nodeType *));
+    nodeType **lists = (nodeType **)content;
+    nodeType *current = lists[0];
+    nodeType *next = lists[1];
     cout << "(";
     printNode(current);
     printNode(next);
@@ -71,7 +72,7 @@ char *strAppend(char *dst, const char *src) {
 
 char *ConcatAllRecc(nodeType *list, char *str) {
   nodeType type = *list;
-  void *content = (char *)list + sizeof(nodeType);
+  void *content = list + 1;
   switch(type) {
   case Integer: {
     return str;
@@ -80,8 +81,9 @@ char *ConcatAllRecc(nodeType *list, char *str) {
     return strAppend(str, (char *)content);
   }
   case List: {
-    nodeType *current = *(nodeType **)content;
-    nodeType *next = *(nodeType **)((char *)content + sizeof(nodeType *));
+    nodeType **lists = (nodeType **)content;
+    nodeType *current = lists[0];
+    nodeType *next = lists[1];
     str = ConcatAllRecc(current, str);
     return ConcatAllRecc(next, str);
   }
@@ -92,8 +94,7 @@ char *ConcatAllRecc(nodeType *list, char *str) {
 }
 
 char *ConcatAll(nodeType *list) {
-  char *str = (char *) malloc(sizeof(char));
-  strcpy(str, "");
+  char *str = strdup("");
   str = ConcatAllRecc(list, str);
   return str;
 }
