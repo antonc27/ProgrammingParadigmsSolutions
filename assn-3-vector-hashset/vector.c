@@ -35,7 +35,7 @@ int VectorLength(const vector *v)
 void *VectorNth(const vector *v, int position)
 {
   assert(position >= 0 && position < VectorLength(v));
-  return (char *)v + v->elemSize * position;
+  return (char *)v->elems + v->elemSize * position;
 }
 
 void VectorReplace(vector *v, const void *elemAddr, int position)
@@ -47,9 +47,9 @@ void VectorInsert(vector *v, const void *elemAddr, int position)
   VectorReallocIfNeeded(v);
   int n = VectorLength(v);
   int delta = n - position;
-  void *src = (char *)v + v->elemSize * position;
+  void *src = (char *)v->elems + v->elemSize * position;
   if (delta > 0) {
-    void *dest = (char *)v + v->elemSize * (position + 1);
+    void *dest = (char *)v->elems + v->elemSize * (position + 1);
     memmove(dest, src, v->elemSize * delta);
   }
   memcpy(src, elemAddr, v->elemSize);
