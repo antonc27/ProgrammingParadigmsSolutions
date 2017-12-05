@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <search.h>
 
 void VectorNew(vector *v, int elemSize, VectorFreeFunction freeFn, int initialAllocation)
 {
@@ -39,7 +40,13 @@ void *VectorNth(const vector *v, int position)
 }
 
 void VectorReplace(vector *v, const void *elemAddr, int position)
-{}
+{
+  void *elem = VectorNth(v, position);
+  if (v->freeFunction != NULL) {
+    v->freeFunction(elem);
+  }
+  memcpy(elem, elemAddr, v->elemSize);
+}
 
 void VectorInsert(vector *v, const void *elemAddr, int position)
 {
@@ -62,17 +69,51 @@ void VectorAppend(vector *v, const void *elemAddr)
 }
 
 void VectorDelete(vector *v, int position)
-{}
+{
+  void *elem = VectorNth(v, position);
+  if (v->freeFunction != NULL) {
+    v->freeFunction(elem);
+  }
+  int n = VectorLength(v);
+  int delta = n - position;
+  void *src = (char *)v->elems + v->elemSize * (position + 1);
+  if (delta > 0) {
+    void *dest = (char *)v->elems + v->elemSize * position;
+    memmove(dest, src, v->elemSize * delta);
+  }
+}
 
 void VectorSort(vector *v, VectorCompareFunction compare)
 {}
 
 void VectorMap(vector *v, VectorMapFunction mapFn, void *auxData)
-{}
+{
+  assert(mapFn != NULL);
+  for (int i = 0; i < VectorLength(v); i++) {
+    mapFn(VectorNth(v, i), auxData);
+  }
+}
 
 static const int kNotFound = -1;
 int VectorSearch(const vector *v, const void *key, VectorCompareFunction searchFn, int startIndex, bool isSorted)
-{ return -1; } 
+{
+  assert(key != NULL);
+  assert(searchFn != NULL);
+  assert(startIndex >= 0 && startIndex <= VectorLength(v));
+  const void *base = VectorNth(v, startIndex);
+  int effectiveLength = VectorLength(v) - startIndex;
+  void *found = NULL;
+  if (isSorted) {
+    found = bsearch(key, base, effectiveLength, v->elemSize, searchFn);
+  } else {
+    found = lfind(key, base, &effectiveLength, v->elemSize, searchFn);    
+  }
+  if (found == NULL) {
+    return kNotFound;
+  }
+  int foundIndex = ((char *)found - (char *)v->elems) / v->elemSize;
+  return foundIndex;
+} 
 
 void VectorReallocIfNeeded(vector *v)
 {
