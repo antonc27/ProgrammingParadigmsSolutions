@@ -271,4 +271,6 @@ void VectorSort(vector *v, VectorCompareFunction comparefn);
 
 void VectorMap(vector *v, VectorMapFunction mapfn, void *auxData);
 
+void VectorReallocIfNeeded(vector *v);
+
 #endif

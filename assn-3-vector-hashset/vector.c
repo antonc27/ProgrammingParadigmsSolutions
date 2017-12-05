@@ -42,10 +42,24 @@ void VectorReplace(vector *v, const void *elemAddr, int position)
 {}
 
 void VectorInsert(vector *v, const void *elemAddr, int position)
-{}
+{
+  assert(position >= 0 && position <= VectorLength(v));
+  VectorReallocIfNeeded(v);
+  int n = VectorLength(v);
+  int delta = n - position;
+  void *src = (char *)v + v->elemSize * position;
+  if (delta > 0) {
+    void *dest = (char *)v + v->elemSize * (position + 1);
+    memmove(dest, src, v->elemSize * delta);
+  }
+  memcpy(src, elemAddr, v->elemSize);
+  v->logLength++;
+}
 
 void VectorAppend(vector *v, const void *elemAddr)
-{}
+{
+  VectorInsert(v, elemAddr, VectorLength(v));
+}
 
 void VectorDelete(vector *v, int position)
 {}
@@ -63,7 +77,9 @@ int VectorSearch(const vector *v, const void *key, VectorCompareFunction searchF
 void VectorReallocIfNeeded(vector *v)
 {
   int n = VectorLength(v);
-  if (n + 1 <= v->allocLength) {
-    v->elems = realloc(v->elems, v->elemSize * (n + v->allocStep));
+  if (n + 1 > v->allocLength) {
+    v->allocLength += v->allocStep;
+    v->elems = realloc(v->elems, v->elemSize * v->allocLength);
+    assert(v->elems != NULL);
   }
 }
