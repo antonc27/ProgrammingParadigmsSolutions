@@ -10,7 +10,8 @@ void VectorNew(vector *v, int elemSize, VectorFreeFunction freeFn, int initialAl
   assert(initialAllocation >= 0);
   v->elemSize = elemSize;
   v->logLength = 0;
-  v->allocLength = (initialAllocation == 0) ? 1 : initialAllocation;
+  v->allocStep = (initialAllocation == 0) ? 1 : initialAllocation;
+  v->allocLength = v->allocStep;
   v->freeFunction = freeFn;
   v->elems = malloc(v->allocLength * v->elemSize);
   assert(v->elems != NULL);
@@ -58,3 +59,11 @@ void VectorMap(vector *v, VectorMapFunction mapFn, void *auxData)
 static const int kNotFound = -1;
 int VectorSearch(const vector *v, const void *key, VectorCompareFunction searchFn, int startIndex, bool isSorted)
 { return -1; } 
+
+void VectorReallocIfNeeded(vector *v)
+{
+  int n = VectorLength(v);
+  if (n + 1 <= v->allocLength) {
+    v->elems = realloc(v->elems, v->elemSize * (n + v->allocStep));
+  }
+}
