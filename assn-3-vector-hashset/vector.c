@@ -81,6 +81,7 @@ void VectorDelete(vector *v, int position)
     void *dest = (char *)v->elems + v->elemSize * position;
     memmove(dest, src, v->elemSize * delta);
   }
+  v->logLength--;
 }
 
 void VectorSort(vector *v, VectorCompareFunction compare)
