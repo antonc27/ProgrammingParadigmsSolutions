@@ -84,7 +84,12 @@ void VectorDelete(vector *v, int position)
 }
 
 void VectorSort(vector *v, VectorCompareFunction compare)
-{}
+{
+  assert(compare != NULL);
+  void *base = VectorNth(v, 0);
+  int n = VectorLength(v);
+  qsort(base, n, v->elemSize, compare);
+}
 
 void VectorMap(vector *v, VectorMapFunction mapFn, void *auxData)
 {
