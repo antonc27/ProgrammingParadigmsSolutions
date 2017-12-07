@@ -73,7 +73,12 @@ typedef void (*HashSetFreeFunction)(void *elemAddr);
  */
 
 typedef struct {
-  // to be filled in by you
+  vector **buckets;
+  int elemSize;
+  int numBuckets;
+  HashSetHashFunction hashFn;
+  HashSetCompareFunction compareFn;
+  HashSetFreeFunction freeFn;
 } hashset;
 
 /**
