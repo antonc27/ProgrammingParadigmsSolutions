@@ -106,7 +106,7 @@ int VectorSearch(const vector *v, const void *key, VectorCompareFunction searchF
   assert(key != NULL);
   assert(searchFn != NULL);
   assert(startIndex >= 0 && startIndex <= VectorLength(v));
-  const void *base = VectorNth(v, startIndex);
+  const void *base = (char *)v->elems + v->elemSize * startIndex;
   size_t effectiveLength = VectorLength(v) - startIndex;
   void *found = NULL;
   if (isSorted) {
