@@ -17,16 +17,18 @@ void HashSetNew(hashset *h, int elemSize, int numBuckets,
   h->freeFn = freefn;
   h->buckets = (vector **) malloc(sizeof(vector *) * numBuckets);
   for (int i = 0; i < numBuckets; i++) {
-    vector v;
-    VectorNew(&v, elemSize, freefn, 1);
-    h->buckets[i] = &v;
+    vector *v = (vector *) malloc(sizeof(vector));
+    VectorNew(v, elemSize, freefn, 1);
+    h->buckets[i] = v;
   }
 }
 
 void HashSetDispose(hashset *h)
 {
   for (int i = 0; i < h->numBuckets; i++) {
-    VectorDispose(h->buckets[i]);
+    vector *v = h->buckets[i];
+    VectorDispose(v);
+    free(v);
   }
   free(h->buckets);
 }
