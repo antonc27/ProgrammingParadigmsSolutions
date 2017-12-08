@@ -44,7 +44,13 @@ int HashSetCount(const hashset *h)
 
 void HashSetMap(hashset *h, HashSetMapFunction mapfn, void *auxData)
 {
-  
+  assert(mapfn != NULL);
+  for (int i = 0; i < h->numBuckets; i ++) {
+    vector *v = h->buckets[i];
+    for (int j = 0; j < VectorLength(v); j++) {
+      mapfn(VectorNth(v, j), auxData);
+    }
+  }
 }
 
 void HashSetEnter(hashset *h, const void *elemAddr)
