@@ -1,7 +1,14 @@
 #include <stdbool.h>
 
 typedef struct {
-	// to be completed
+  int index;
+
+  void *base;
+  int *allocLen;
+  int *logLen;
+
+  int elemSize;
+  int (*cmpFn)(const void *, const void *);
 } sortedset;
 
 /*
