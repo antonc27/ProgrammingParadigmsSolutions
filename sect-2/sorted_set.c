@@ -106,3 +106,11 @@ bool SetAdd(sortedset *set, const void *elemPtr) {
 
   return true;
 }
+
+void SetPrint(sortedset *set, void (*printfn)(const void *elemPtr)) {
+  for (int i = 0; i < set->logLen; i++) {
+    void *node = SetNode(set, i);
+    printfn(node);
+    printf(" %d %d\n", *SetNodeLeftIndex(set, node), *SetNodeRightIndex(set, node));
+  }
+}

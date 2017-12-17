@@ -44,3 +44,6 @@ bool SetAdd(sortedset *set, const void *elemPtr);
 * for successful searches, and NULL is returned to denote failure. */
 
 void *SetSearch(sortedset *set, const void *elemPtr);
+
+// printd in memory representation of set
+void SetPrint(sortedset *set, void (*printfn)(const void *elemPtr));
