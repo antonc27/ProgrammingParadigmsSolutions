@@ -1,11 +1,10 @@
 #include <stdbool.h>
 
 typedef struct {
-  int index;
-
   void *base;
-  int *allocLen;
-  int *logLen;
+
+  int allocLen;
+  int logLen;
 
   int elemSize;
   int (*cmpFn)(const void *, const void *);
