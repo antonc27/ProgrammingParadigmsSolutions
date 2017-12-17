@@ -44,6 +44,23 @@ void SetAssignNewNode(sortedset *set, const void *elemPtr, int newIndex) {
   set->logLen++;
 }
 
+int *SetFindNodeIndex(sortedset *set, const void *elemPtr) {
+  int *firstIndexPtr  = ((int *)set->base - 1);
+  int *currIndexPtr = firstIndexPtr;  
+  while (*currIndexPtr != -1) {
+    void *currNodePtr = SetNode(set, *currIndexPtr);
+    int cmpResult = set->cmpFn(currNodePtr, elemPtr);
+    if (cmpResult == 0) {
+      break;
+    } else if (cmpResult > 0) {
+      currIndexPtr = SetNodeLeftIndex(set, currNodePtr);
+    } else {
+      currIndexPtr = SetNodeRightIndex(set, currNodePtr);
+    }
+  }
+  return currIndexPtr;
+}
+
 // Public
 
 void SetNew(sortedset *set, int elemSize, int (*cmpfn)(const void *, const void *)) {
@@ -63,21 +80,8 @@ void SetNew(sortedset *set, int elemSize, int (*cmpfn)(const void *, const void 
 }
 
 void *SetSearch(sortedset *set, const void *elemPtr) {
-  int currentIndex = *((int *)set->base - 1);
-  
-  while (currentIndex != -1) {
-    void *currNodePtr = SetNode(set, currentIndex);
-    int cmpResult = set->cmpFn(currNodePtr, elemPtr);
-    if (cmpResult == 0) {
-      break;
-    } else if (cmpResult > 0) {
-      currentIndex = *SetNodeLeftIndex(set, currNodePtr);
-    } else {
-      currentIndex = *SetNodeRightIndex(set, currNodePtr);
-    }
-  }
-
-  return (currentIndex == -1) ? NULL : SetNode(set, currentIndex);
+  int *currIndexPtr = SetFindNodeIndex(set, elemPtr);
+  return (*currIndexPtr == -1) ? NULL : SetNode(set, *currIndexPtr);
 }
 
 bool SetAdd(sortedset *set, const void *elemPtr) {
@@ -90,34 +94,15 @@ bool SetAdd(sortedset *set, const void *elemPtr) {
   }
   assert(*firstIndexPtr == 0);
 
-  int previousIndex = -1;
-  int currentIndex = *firstIndexPtr;
-  int nextIndex = -1;
-  int cmpResult;
-  
-  while (currentIndex != -1) {
-    void *currNodePtr = SetNode(set, currentIndex);
-    cmpResult = set->cmpFn(currNodePtr, elemPtr);
-    if (cmpResult == 0) {
-      return false;
-    } else if (cmpResult > 0) {
-      nextIndex = *SetNodeLeftIndex(set, currNodePtr);
-    } else {
-      nextIndex = *SetNodeRightIndex(set, currNodePtr);
-    }
-    previousIndex = currentIndex;
-    currentIndex = nextIndex;
+  int *currIndexPtr = SetFindNodeIndex(set, elemPtr);
+  if (*currIndexPtr != -1) {
+    return false;
   }
   
   int newIndex = set->logLen;
   SetAssignNewNode(set, elemPtr, newIndex);
   
-  void *prevNodePtr = SetNode(set, previousIndex);
-  if (cmpResult > 0) {
-    *SetNodeLeftIndex(set, prevNodePtr) = newIndex;
-  } else {
-    *SetNodeRightIndex(set, prevNodePtr) = newIndex;
-  }
+  *currIndexPtr = newIndex;
 
   return true;
 }
