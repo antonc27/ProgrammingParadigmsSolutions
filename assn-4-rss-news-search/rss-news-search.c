@@ -40,11 +40,30 @@ static bool WordIsWellFormed(const char *word);
  * word appears.
  */
 
+static const char *const kWhiteSpaceCharacters = " \t\n\r";
+static void PrintAllWords(FILE *infile)
+{
+  streamtokenizer st;
+  char word[128];  // reasonable upper limit on length of all English words..
+  STNew(&st, infile, kWhiteSpaceCharacters, true);
+  while (STNextToken(&st, word, sizeof(word))) {
+      printf("%s\n", word);
+  }
+  STDispose(&st);
+}
+
 static const char *const kWelcomeTextFile = "/usr/class/cs107/assignments/assn-4-rss-news-search-data/welcome.txt";
+static const char *const kStopWordsFile = "/usr/class/cs107/assignments/assn-4-rss-news-search-data/stop-words.txt";
 static const char *const kDefaultFeedsFile = "/usr/class/cs107/assignments/assn-4-rss-news-search-data/rss-feeds.txt";
 int main(int argc, char **argv)
 {
   Welcome(kWelcomeTextFile);
+
+  FILE *sw;
+  sw = fopen(kStopWordsFile, "r");
+  PrintAllWords(sw);
+  fclose(sw);
+
   BuildIndices((argc == 1) ? kDefaultFeedsFile : argv[1]);
   QueryIndices();
   return 0;
