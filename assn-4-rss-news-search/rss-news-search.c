@@ -9,6 +9,7 @@
 #include "urlconnection.h"
 #include "streamtokenizer.h"
 #include "html-utils.h"
+#include "hashset.h"
 
 static void Welcome(const char *welcomeTextFileName);
 static void BuildIndices(const char *feedsFileName);
@@ -40,16 +41,45 @@ static bool WordIsWellFormed(const char *word);
  * word appears.
  */
 
+static const signed long kHashMultiplier = -1664117991L;
+static int StringHash(const void *elem, int numBuckets)  
+{            
+  char *s = (char *)elem;
+  int i;
+  unsigned long hashcode = 0;
+  
+  for (i = 0; i < strlen(s); i++)  
+    hashcode = hashcode * kHashMultiplier + tolower(s[i]);  
+  
+  return hashcode % numBuckets;                                
+}
+
+int StringCompareFunction(const void *elemAddr1, const void *elemAddr2) {
+  return strcmp((char *)elemAddr1, (char *)elemAddr2);
+}
+
+void StringFree(void *elem) {
+  free(elem);
+}
+
 static const char *const kWhiteSpaceCharacters = " \t\n\r";
-static void PrintAllWords(FILE *infile)
+static void FillStopWords(const char* stopWordsFileName, hashset *hashset)
 {
+  FILE *file;
   streamtokenizer st;
-  char word[128];  // reasonable upper limit on length of all English words..
-  STNew(&st, infile, kWhiteSpaceCharacters, true);
+  char word[128];
+
+  file = fopen(stopWordsFileName, "r");
+  STNew(&st, file, kWhiteSpaceCharacters, true);
   while (STNextToken(&st, word, sizeof(word))) {
-      printf("%s\n", word);
+    char *dummy = word;
+    char *s = (char *)strdup(dummy);
+    printf("%s\n", s);
+    HashSetEnter(hashset, s);
+    //free(s);
   }
   STDispose(&st);
+  fclose(file);
 }
 
 static const char *const kWelcomeTextFile = "/usr/class/cs107/assignments/assn-4-rss-news-search-data/welcome.txt";
@@ -58,11 +88,11 @@ static const char *const kDefaultFeedsFile = "/usr/class/cs107/assignments/assn-
 int main(int argc, char **argv)
 {
   Welcome(kWelcomeTextFile);
-
-  FILE *sw;
-  sw = fopen(kStopWordsFile, "r");
-  PrintAllWords(sw);
-  fclose(sw);
+  
+  hashset stopWords;
+  HashSetNew(&stopWords, sizeof(char *), 1009, StringHash, StringCompareFunction, StringFree);
+  FillStopWords(kStopWordsFile, &stopWords);
+  HashSetDispose(&stopWords);
 
   BuildIndices((argc == 1) ? kDefaultFeedsFile : argv[1]);
   QueryIndices();

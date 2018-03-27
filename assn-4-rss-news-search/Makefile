@@ -51,4 +51,4 @@ clean :
 	/bin/rm -f *.o a.out core $(TARGET) $(TARGET-PURE)
 
 TAGS : $(SRCS) $(HDRS)
-	etags -t $(SRCS) $(HDRS)
+	etags $(SRCS) $(HDRS)
