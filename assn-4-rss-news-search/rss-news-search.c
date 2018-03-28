@@ -44,7 +44,7 @@ static bool WordIsWellFormed(const char *word);
 static const signed long kHashMultiplier = -1664117991L;
 static int StringHash(const void *elem, int numBuckets)  
 {            
-  char *s = (char *)elem;
+  char *s = *(char **)elem;
   int i;
   unsigned long hashcode = 0;
   
@@ -55,11 +55,11 @@ static int StringHash(const void *elem, int numBuckets)
 }
 
 int StringCompareFunction(const void *elemAddr1, const void *elemAddr2) {
-  return strcmp((char *)elemAddr1, (char *)elemAddr2);
+  return strcmp(*(char **)elemAddr1, *(char **)elemAddr2);
 }
 
 void StringFree(void *elem) {
-  free(elem);
+  free(*(char **)elem);
 }
 
 static const char *const kWhiteSpaceCharacters = " \t\n\r";
@@ -72,11 +72,9 @@ static void FillStopWords(const char* stopWordsFileName, hashset *hashset)
   file = fopen(stopWordsFileName, "r");
   STNew(&st, file, kWhiteSpaceCharacters, true);
   while (STNextToken(&st, word, sizeof(word))) {
-    //    char *dummy = word;
     char *s = strdup(word);
     printf("%s 0x%08lx\n", s, (long unsigned int)s);
-    HashSetEnter(hashset, s);
-    //free(s);
+    HashSetEnter(hashset, &s);
   }
   STDispose(&st);
   fclose(file);
