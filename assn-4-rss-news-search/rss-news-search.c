@@ -12,6 +12,7 @@
 #include "hashset.h"
 
 static void Welcome(const char *welcomeTextFileName);
+static void FillStopWords(const char* stopWordsFileName, hashset *hashset);
 static void BuildIndices(const char *feedsFileName);
 static void ProcessFeed(const char *remoteDocumentName);
 static void PullAllNewsItems(urlconnection *urlconn);
@@ -25,20 +26,7 @@ static void ProcessResponse(const char *word);
 static bool WordIsWellFormed(const char *word);
 
 /**
- * Function: main
- * --------------
- * Serves as the entry point of the full application.
- * You'll want to update main to declare several hashsets--
- * one for stop words, another for previously seen urls, etc--
- * and pass them (by address) to BuildIndices and QueryIndices.
- * In fact, you'll need to extend many of the prototypes of the
- * supplied helpers functions to take one or more hashset *s.
- *
- * Think very carefully about how you're going to keep track of
- * all of the stop words, how you're going to keep track of
- * all the previously seen articles, and how you're going to 
- * map words to the collection of news articles where that
- * word appears.
+ * Helpers
  */
 
 static const signed long kHashMultiplier = -1664117991L;
@@ -62,23 +50,22 @@ void StringFree(void *elem) {
   free(*(char **)elem);
 }
 
-static const char *const kWhiteSpaceCharacters = " \t\n\r";
-static void FillStopWords(const char* stopWordsFileName, hashset *hashset)
-{
-  FILE *file;
-  streamtokenizer st;
-  char word[128];
-
-  file = fopen(stopWordsFileName, "r");
-  STNew(&st, file, kWhiteSpaceCharacters, true);
-  while (STNextToken(&st, word, sizeof(word))) {
-    char *s = strdup(word);
-    printf("%s 0x%08lx\n", s, (long unsigned int)s);
-    HashSetEnter(hashset, &s);
-  }
-  STDispose(&st);
-  fclose(file);
-}
+/**
+ * Function: main
+ * --------------
+ * Serves as the entry point of the full application.
+ * You'll want to update main to declare several hashsets--
+ * one for stop words, another for previously seen urls, etc--
+ * and pass them (by address) to BuildIndices and QueryIndices.
+ * In fact, you'll need to extend many of the prototypes of the
+ * supplied helpers functions to take one or more hashset *s.
+ *
+ * Think very carefully about how you're going to keep track of
+ * all of the stop words, how you're going to keep track of
+ * all the previously seen articles, and how you're going to 
+ * map words to the collection of news articles where that
+ * word appears.
+ */
 
 static const char *const kWelcomeTextFile = "/usr/class/cs107/assignments/assn-4-rss-news-search-data/welcome.txt";
 static const char *const kStopWordsFile = "/usr/class/cs107/assignments/assn-4-rss-news-search-data/stop-words.txt";
@@ -127,6 +114,28 @@ static void Welcome(const char *welcomeTextFileName)
   printf("\n");
   STDispose(&st); // remember that STDispose doesn't close the file, since STNew doesn't open one.. 
   fclose(infile);
+}
+
+/** 
+ * Function: FillStopWords
+ * -----------------
+ */
+
+static const char *const kWhiteSpaceCharacters = " \t\n\r";
+static void FillStopWords(const char* stopWordsFileName, hashset *hashset)
+{
+  FILE *file;
+  streamtokenizer st;
+  char word[128];
+
+  file = fopen(stopWordsFileName, "r");
+  STNew(&st, file, kWhiteSpaceCharacters, true);
+  while (STNextToken(&st, word, sizeof(word))) {
+    char *s = strdup(word);
+    HashSetEnter(hashset, &s);
+  }
+  STDispose(&st);
+  fclose(file);
 }
 
 /**
