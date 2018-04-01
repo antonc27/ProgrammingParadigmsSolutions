@@ -21,8 +21,8 @@ static void ProcessSingleNewsItem(streamtokenizer *st);
 static void ExtractElement(streamtokenizer *st, const char *htmlTag, char dataBuffer[], int bufferLength);
 static void ParseArticle(const char *articleTitle, const char *articleDescription, const char *articleURL);
 static void ScanArticle(streamtokenizer *st, const char *articleTitle, const char *unused, const char *articleURL);
-static void QueryIndices();
-static void ProcessResponse(const char *word);
+static void QueryIndices(hashset *stopWords);
+static void ProcessResponse(const char *word, hashset *stopWords);
 static bool WordIsWellFormed(const char *word);
 
 /**
@@ -77,10 +77,11 @@ int main(int argc, char **argv)
   hashset stopWords;
   HashSetNew(&stopWords, sizeof(char *), 1009, StringHash, StringCompareFunction, StringFree);
   FillStopWords(kStopWordsFile, &stopWords);
-  HashSetDispose(&stopWords);
 
   BuildIndices((argc == 1) ? kDefaultFeedsFile : argv[1]);
-  QueryIndices();
+  QueryIndices(&stopWords);
+
+  HashSetDispose(&stopWords);
   return 0;
 }
 
@@ -450,7 +451,7 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
  * that contain that word.
  */
 
-static void QueryIndices()
+static void QueryIndices(hashset *stopWords)
 {
   char response[1024];
   while (true) {
@@ -458,7 +459,7 @@ static void QueryIndices()
     fgets(response, sizeof(response), stdin);
     response[strlen(response) - 1] = '\0';
     if (strcasecmp(response, "") == 0) break;
-    ProcessResponse(response);
+    ProcessResponse(response, stopWords);
   }
 }
 
@@ -469,13 +470,15 @@ static void QueryIndices()
  * for a list of web documents containing the specified word.
  */
 
-static void ProcessResponse(const char *word)
+static void ProcessResponse(const char *word, hashset *stopWords)
 {
-  if (WordIsWellFormed(word)) {
-    printf("\tWell, we don't have the database mapping words to online news articles yet, but if we DID have\n");
-    printf("\tour hashset of indices, we'd list all of the articles containing \"%s\".\n", word);
-  } else {
+  if (!WordIsWellFormed(word)) {
     printf("\tWe won't be allowing words like \"%s\" into our set of indices.\n", word);
+  } else if (HashSetLookup(stopWords, &word) != NULL) {
+    printf("\t\"%s\" is too common a word to be taken seriously.  Please be more specific.\n", word);
+  } else {
+    printf("\tWell, we don't have the database mapping words to online news articles yet, but if we DID have\n");    
+    printf("\tour hashset of indices, we'd list all of the articles containing \"%s\".\n", word);
   }
 }
 
