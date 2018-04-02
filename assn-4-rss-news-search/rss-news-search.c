@@ -89,13 +89,37 @@ static void IndexFree(void *elem) {
   StringFree(&idx->word);
 }
 
-static void ArticleFree(void *elem) {
+static int ArticleInfoHash(const void *elem, int numBuckets)  
+{
+  struct articleInfo *artI = *(struct articleInfo **)elem;
+  return StringHash(&artI->articleTitle, numBuckets);
+}
+
+static int ArticleInfoCompareFunction(const void *elemAddr1, const void *elemAddr2) {
+  // TODO: compare urls too
+  char *first = (*(struct articleInfo **)elemAddr1)->articleTitle;
+  char *second = (*(struct articleInfo **)elemAddr2)->articleTitle;
+  return StringCompareFunction(&first, &second);
+}
+
+static void ArticleInfoFree(void *elem) {
+  struct articleInfo *artI = *(struct articleInfo **)elem;
+  printf("\tFreeing article info 0x%08lx \"%s\" \"%s\"\n", (long unsigned int)artI, artI->articleTitle, artI->articleURL);
+  StringFree(&artI->articleTitle);
+  StringFree(&artI->articleURL);
+  free(artI);
+  //free(artC);
+}
+
+static void ArticleCountFree(void *elem) {
   struct articleCount *artC = *(struct articleCount **)elem;
+  /*
   struct articleInfo *artI = artC->info;
   printf("\tFreeing article 0x%08lx \"%s\" \"%s\"\n", (long unsigned int)artC, artI->articleTitle, artI->articleURL);
   StringFree(&artI->articleTitle);
   StringFree(&artI->articleURL);
   free(artI);
+  */
   free(artC);
 }
 
@@ -131,10 +155,12 @@ int main(int argc, char **argv)
   HashSetNew(&indexedWords, sizeof(struct index), 10007, IndexHash, IndexCompareFunction, IndexFree);
 
   hashset indexedArticles;
+  HashSetNew(&indexedArticles, sizeof(struct articleInfo *), 10007, ArticleInfoHash, ArticleInfoCompareFunction, ArticleInfoFree);
 
   BuildIndices((argc == 1) ? kDefaultFeedsFile : argv[1], &stopWords, &indexedWords, &indexedArticles);
   QueryIndices(&stopWords, &indexedWords, &indexedArticles);
 
+  HashSetDispose(&indexedArticles);
   HashSetDispose(&indexedWords);
   HashSetDispose(&stopWords);
   return 0;
@@ -495,15 +521,25 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
 	struct index *existingIndex = HashSetLookup(indexedWords, &idx);
 	if (existingIndex == NULL) {
 	  idx.articles = malloc(sizeof(vector));
-	  VectorNew(idx.articles, sizeof(struct article*), ArticleFree, 0);
+	  VectorNew(idx.articles, sizeof(struct article*), ArticleCountFree, 0);
 	  
 	  struct articleCount *artC = malloc(sizeof(struct articleCount));
 	  artC->count = 1;
+
 	  struct articleInfo *artI = malloc(sizeof(struct articleInfo));
 	  artI->articleTitle = strdup(articleTitle);
 	  artI->articleURL = strdup(articleURL);
-	  artC->info = artI;
-	  printf("Indexing 0x%08lx \"%s\" \"%s\" \"%s\"\n", (long unsigned int)artC, word, artI->articleTitle, artI->articleURL);
+	  
+	  struct articleInfo *existingArtI = HashSetLookup(indexedArticles, &artI);
+	  if (existingArtI == NULL) {
+	    HashSetEnter(indexedArticles, &artI);
+	    existingArtI = HashSetLookup(indexedArticles, &artI);
+	  } else {
+	    ArticleInfoFree(&artI);
+	  }
+	  artC->info = *(struct articleInfo **)existingArtI;
+
+	  printf("Indexing 0x%08lx \"%s\" \"%s\" \"%s\"\n", (long unsigned int)artC, word, artC->info->articleTitle, artC->info->articleURL);
 	  
 	  VectorAppend(idx.articles, &artC);
 	  
