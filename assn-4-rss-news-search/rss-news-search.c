@@ -547,8 +547,21 @@ static void ProcessResponse(const char *word, hashset *stopWords, hashset *indic
   } else if (HashSetLookup(stopWords, &word) != NULL) {
     printf("\t\"%s\" is too common a word to be taken seriously.  Please be more specific.\n", word);
   } else {
-    printf("\tWell, we don't have the database mapping words to online news articles yet, but if we DID have\n");    
-    printf("\tour hashset of indices, we'd list all of the articles containing \"%s\".\n", word);
+    struct index *idx = HashSetLookup(indices, &word);
+    if (idx != NULL) {
+      vector *v = idx->articles;
+      int n = VectorLength(v);
+      printf("Nice! We found %d articles that include the word \"%s\".\n\n", n, idx->word);
+      
+      for (int i = 0; i < n; i++) {
+	struct article *art = *(struct article **)VectorNth(v, i);
+	printf("\t%d.) \"%s\" [search term occurs %d times]\n", i+1, art->articleTitle, art->count);
+	printf("\t     \"%s\"\n", art->articleURL);
+      }
+      printf("\n");
+    } else {
+      printf("\tNone of today's news articles contain the word \"%s\".\n", word);
+    }
   }
 }
 
