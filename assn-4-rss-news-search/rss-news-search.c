@@ -111,15 +111,14 @@ static void ArticleInfoFree(void *elem) {
   //free(artC);
 }
 
+int ArticleCountCompareFunction(const void *elemAddr1, const void *elemAddr2) {
+  struct articleCount *artC1 = *(struct articleCount **)elemAddr1;
+  struct articleCount *artC2 = *(struct articleCount **)elemAddr2;
+  return ArticleInfoCompareFunction(&artC1->info, &artC2->info);
+}
+
 static void ArticleCountFree(void *elem) {
   struct articleCount *artC = *(struct articleCount **)elem;
-  /*
-  struct articleInfo *artI = artC->info;
-  printf("\tFreeing article 0x%08lx \"%s\" \"%s\"\n", (long unsigned int)artC, artI->articleTitle, artI->articleURL);
-  StringFree(&artI->articleTitle);
-  StringFree(&artI->articleURL);
-  free(artI);
-  */
   free(artC);
 }
 
@@ -521,7 +520,7 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
 	struct index *existingIndex = HashSetLookup(indexedWords, &idx);
 	if (existingIndex == NULL) {
 	  idx.articles = malloc(sizeof(vector));
-	  VectorNew(idx.articles, sizeof(struct article*), ArticleCountFree, 0);
+	  VectorNew(idx.articles, sizeof(struct articleCount *), ArticleCountFree, 0);
 	  
 	  struct articleCount *artC = malloc(sizeof(struct articleCount));
 	  artC->count = 1;
@@ -545,8 +544,32 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
 	  
 	  HashSetEnter(indexedWords, &idx);
 	} else {
+	  free(idx.word);
+
+	  struct articleInfo *artI = malloc(sizeof(struct articleInfo));
+	  artI->articleTitle = strdup(articleTitle);
+	  artI->articleURL = strdup(articleURL);
 	  
-	  free(idx.word); 
+	  struct articleInfo *existingArtI = HashSetLookup(indexedArticles, &artI);
+	  if (existingArtI == NULL) {
+	    HashSetEnter(indexedArticles, &artI);
+	    existingArtI = HashSetLookup(indexedArticles, &artI);
+	  } else {
+	    ArticleInfoFree(&artI);
+	  }
+	  struct articleInfo *key = *(struct articleInfo **)existingArtI;
+	  
+	  vector *articles = existingIndex->articles;
+	  int index = VectorSearch(articles, key, ArticleCountCompareFunction, 0, false);
+	  if (index != -1) {
+	    struct articleCount *artC = *(struct articleCount **)VectorNth(articles, index);
+	    artC->count++;
+	  } else {
+	    struct articleCount *newArtC = malloc(sizeof(struct articleCount));
+	    newArtC->count = 1;
+	    newArtC->info = key;
+	    VectorAppend(articles, &newArtC);
+	  }
 	}
       }
     }
