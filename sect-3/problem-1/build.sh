@@ -1,0 +1,1 @@
+gcc -o ssa-test vector.c ssa.c ssa-test.c
