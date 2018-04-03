@@ -91,27 +91,25 @@ static void IndexFree(void *elem) {
 
 static int ArticleInfoHash(const void *elem, int numBuckets)  
 {
-  struct articleInfo *artI = *(struct articleInfo **)elem;
+  struct articleInfo *artI = (struct articleInfo *)elem;
   return StringHash(&artI->articleTitle, numBuckets);
 }
 
 static int ArticleInfoCompareFunction(const void *elemAddr1, const void *elemAddr2) {
   // TODO: compare urls too
-  char *first = (*(struct articleInfo **)elemAddr1)->articleTitle;
-  char *second = (*(struct articleInfo **)elemAddr2)->articleTitle;
+  char *first = ((struct articleInfo *)elemAddr1)->articleTitle;
+  char *second = ((struct articleInfo *)elemAddr2)->articleTitle;
   return StringCompareFunction(&first, &second);
 }
 
 static void ArticleInfoFree(void *elem) {
-  struct articleInfo *artI = *(struct articleInfo **)elem;
+  struct articleInfo *artI = (struct articleInfo *)elem;
   printf("\tFreeing article info 0x%08lx \"%s\" \"%s\"\n", (long unsigned int)artI, artI->articleTitle, artI->articleURL);
   StringFree(&artI->articleTitle);
   StringFree(&artI->articleURL);
-  free(artI);
-  //free(artC);
 }
 
-int ArticleCountPointersCompareFunction(const void *elemAddr1, const void *elemAddr2) {
+static int ArticleCountPointersCompareFunction(const void *elemAddr1, const void *elemAddr2) {
   struct artcileInfo *artI = (struct artcileInfo *)elemAddr1;
   struct articleCount *artC = *(struct articleCount **)elemAddr2;
   return (void *)artI - (void *)artC->info;
@@ -154,7 +152,7 @@ int main(int argc, char **argv)
   HashSetNew(&indexedWords, sizeof(struct index), 10007, IndexHash, IndexCompareFunction, IndexFree);
 
   hashset indexedArticles;
-  HashSetNew(&indexedArticles, sizeof(struct articleInfo *), 10007, ArticleInfoHash, ArticleInfoCompareFunction, ArticleInfoFree);
+  HashSetNew(&indexedArticles, sizeof(struct articleInfo), 10007, ArticleInfoHash, ArticleInfoCompareFunction, ArticleInfoFree);
 
   BuildIndices((argc == 1) ? kDefaultFeedsFile : argv[1], &stopWords, &indexedWords, &indexedArticles);
   QueryIndices(&stopWords, &indexedWords, &indexedArticles);
@@ -485,9 +483,9 @@ static void ParseArticle(const char *articleTitle, const char *articleDescriptio
 }
 
 static struct articleInfo *IndexArticleInfo(const char *articleTitle, const char *articleURL, hashset *indexedArticles) {
-  struct articleInfo *artI = malloc(sizeof(struct articleInfo));
-  artI->articleTitle = strdup(articleTitle);
-  artI->articleURL = strdup(articleURL);
+  struct articleInfo artI;
+  artI.articleTitle = strdup(articleTitle);
+  artI.articleURL = strdup(articleURL);
 
   struct articleInfo *existingArtI = HashSetLookup(indexedArticles, &artI);
   if (existingArtI == NULL) {
@@ -496,7 +494,7 @@ static struct articleInfo *IndexArticleInfo(const char *articleTitle, const char
   } else {
     ArticleInfoFree(&artI);
   }
-  return *(struct articleInfo **)existingArtI;
+  return (struct articleInfo *)existingArtI;
 }
 
 /**
