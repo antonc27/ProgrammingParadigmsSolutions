@@ -21,6 +21,7 @@ static void ProcessSingleNewsItem(streamtokenizer *st, hashset *stopWords, hashs
 static void ExtractElement(streamtokenizer *st, const char *htmlTag, char dataBuffer[], int bufferLength);
 static void ParseArticle(const char *articleTitle, const char *articleDescription, const char *articleURL, hashset *stopWords, hashset *indexedWords, hashset *indexedArticles);
 static void ScanArticle(streamtokenizer *st, const char *articleTitle, const char *unused, const char *articleURL, hashset *stopWords, hashset *indexedWords, hashset *indexedArticles);
+static void IndexWordAndArticle(const char *word, const char *articleTitle, const char *articleURL, hashset *indexedWords, hashset *indexedArticles);
 static void QueryIndices(hashset *stopWords, hashset *indexedWords, hashset *indexedArticles);
 static void ProcessResponse(const char *word, hashset *stopWords, hashset *indexedWords, hashset *indexedArticles);
 static bool WordIsWellFormed(const char *word);
@@ -477,21 +478,6 @@ static void ParseArticle(const char *articleTitle, const char *articleDescriptio
   URLDispose(&u);
 }
 
-static struct articleInfo *IndexArticleInfo(const char *articleTitle, const char *articleURL, hashset *indexedArticles) {
-  struct articleInfo artI;
-  artI.articleTitle = strdup(articleTitle);
-  artI.articleURL = strdup(articleURL);
-
-  struct articleInfo *existingArtI = HashSetLookup(indexedArticles, &artI);
-  if (existingArtI == NULL) {
-    HashSetEnter(indexedArticles, &artI);
-    existingArtI = HashSetLookup(indexedArticles, &artI);
-  } else {
-    ArticleInfoFree(&artI);
-  }
-  return (struct articleInfo *)existingArtI;
-}
-
 /**
  * Function: ScanArticle
  * ---------------------
@@ -523,44 +509,8 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
 	  strcpy(longestWord, word);
 
 	printf("Scanning word \"%s\" for artcile \"%s\" \"%s\"\n\n", word, articleTitle, articleURL);
-
-	struct index idx;
-	idx.word = strdup(word);
 	
-	struct index *existingIndex = HashSetLookup(indexedWords, &idx);
-	if (existingIndex == NULL) {
-	  idx.articles = malloc(sizeof(vector));
-	  VectorNew(idx.articles, sizeof(struct articleCount), NULL, 0);
-	  
-	  struct articleCount artC;
-	  artC.count = 1;
-	  artC.info = IndexArticleInfo(articleTitle, articleURL, indexedArticles);
-
-	  printf("Indexing 0x%08lx \"%s\" \"%s\" \"%s\"\n", (long unsigned int)&artC, word, artC.info->articleTitle, artC.info->articleURL);
-	  
-	  VectorAppend(idx.articles, &artC);
-	  
-	  HashSetEnter(indexedWords, &idx);
-	} else {
-	  free(idx.word);
-
-	  struct articleInfo *key = IndexArticleInfo(articleTitle, articleURL, indexedArticles);	  
-	  vector *articles = existingIndex->articles;
-	  int index = VectorSearch(articles, key, ArticleCountPointersCompareFunction, 0, false);
-	  if (index != -1) {
-	    struct articleCount *artC = (struct articleCount *)VectorNth(articles, index);
-	    printf("\t\tArtcile \"%s\" \"%s\" with count %d found for word \"%s\"\n", artC->info->articleTitle, artC->info->articleURL, artC->count, word);
-	    artC->count++;
-	  } else {
-	    struct articleCount newArtC;
-	    newArtC.count = 1;
-	    newArtC.info = key;
-	    
-	    printf("\t\tArtcile \"%s\" \"%s\" NOT found for word \"%s\", appending\n", newArtC.info->articleTitle, newArtC.info->articleURL, word);
-
-	    VectorAppend(articles, &newArtC);
-	  }
-	}
+	IndexWordAndArticle(word, articleTitle, articleURL, indexedWords, indexedArticles);
       }
     }
   }
@@ -570,6 +520,62 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
   if (strlen(longestWord) >= 15 && (strchr(longestWord, '-') == NULL)) 
     printf(" [Ooooo... long word!]");
   printf("\n");
+}
+
+static struct articleInfo *IndexArticleInfo(const char *articleTitle, const char *articleURL, hashset *indexedArticles)
+{
+  struct articleInfo artI;
+  artI.articleTitle = strdup(articleTitle);
+  artI.articleURL = strdup(articleURL);
+
+  struct articleInfo *existingArtI = HashSetLookup(indexedArticles, &artI);
+  if (existingArtI == NULL) {
+    HashSetEnter(indexedArticles, &artI);
+    existingArtI = HashSetLookup(indexedArticles, &artI);
+  } else {
+    ArticleInfoFree(&artI);
+  }
+  return (struct articleInfo *)existingArtI;
+}
+
+static void IndexWordAndArticle(const char *word, const char *articleTitle, const char *articleURL, hashset *indexedWords, hashset *indexedArticles)
+{
+  struct index idx;
+  idx.word = strdup(word);
+	
+  struct index *existingIndex = HashSetLookup(indexedWords, &idx);
+  if (existingIndex == NULL) {
+    idx.articles = malloc(sizeof(vector));
+    VectorNew(idx.articles, sizeof(struct articleCount), NULL, 0);
+	  
+    struct articleCount artC;
+    artC.count = 1;
+    artC.info = IndexArticleInfo(articleTitle, articleURL, indexedArticles);
+
+    printf("Indexing 0x%08lx \"%s\" \"%s\" \"%s\"\n", (long unsigned int)&artC, word, artC.info->articleTitle, artC.info->articleURL);
+	  
+    VectorAppend(idx.articles, &artC);
+    HashSetEnter(indexedWords, &idx);
+  } else {
+    free(idx.word);
+
+    struct articleInfo *key = IndexArticleInfo(articleTitle, articleURL, indexedArticles);	  
+    vector *articles = existingIndex->articles;
+    int index = VectorSearch(articles, key, ArticleCountPointersCompareFunction, 0, false);
+    if (index != -1) {
+      struct articleCount *artC = (struct articleCount *)VectorNth(articles, index);
+      printf("\t\tArtcile \"%s\" \"%s\" with count %d found for word \"%s\"\n", artC->info->articleTitle, artC->info->articleURL, artC->count, word);
+      artC->count++;
+    } else {
+      struct articleCount newArtC;
+      newArtC.count = 1;
+      newArtC.info = key;
+	    
+      printf("\t\tArtcile \"%s\" \"%s\" NOT found for word \"%s\", appending\n", newArtC.info->articleTitle, newArtC.info->articleURL, word);
+
+      VectorAppend(articles, &newArtC);
+    }
+  }
 }
 
 /** 
