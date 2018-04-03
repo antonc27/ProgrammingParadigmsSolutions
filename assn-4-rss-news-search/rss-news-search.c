@@ -111,10 +111,10 @@ static void ArticleInfoFree(void *elem) {
   //free(artC);
 }
 
-int ArticleCountCompareFunction(const void *elemAddr1, const void *elemAddr2) {
-  struct articleCount *artC1 = *(struct articleCount **)elemAddr1;
-  struct articleCount *artC2 = *(struct articleCount **)elemAddr2;
-  return ArticleInfoCompareFunction(&artC1->info, &artC2->info);
+int ArticleCountPointersCompareFunction(const void *elemAddr1, const void *elemAddr2) {
+  struct artcileInfo *artI = (struct artcileInfo *)elemAddr1;
+  struct articleCount *artC = *(struct articleCount **)elemAddr2;
+  return (void *)artI - (void *)artC->info;
 }
 
 static void ArticleCountFree(void *elem) {
@@ -514,6 +514,8 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
 	if (strlen(word) > strlen(longestWord))
 	  strcpy(longestWord, word);
 
+	printf("Scanning word \"%s\" for artcile \"%s\" \"%s\"\n\n", word, articleTitle, articleURL);
+
 	struct index idx;
 	idx.word = strdup(word);
 	
@@ -557,17 +559,21 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
 	  } else {
 	    ArticleInfoFree(&artI);
 	  }
-	  struct articleInfo *key = *(struct articleInfo **)existingArtI;
+	  struct articleInfo *key = existingArtI;
 	  
 	  vector *articles = existingIndex->articles;
-	  int index = VectorSearch(articles, key, ArticleCountCompareFunction, 0, false);
+	  int index = VectorSearch(articles, key, ArticleCountPointersCompareFunction, 0, false);
 	  if (index != -1) {
 	    struct articleCount *artC = *(struct articleCount **)VectorNth(articles, index);
+	    printf("\t\tArtcile \"%s\" \"%s\" with count %d found for word \"%s\"\n", artC->info->articleTitle, artC->info->articleURL, artC->count, word);
 	    artC->count++;
 	  } else {
 	    struct articleCount *newArtC = malloc(sizeof(struct articleCount));
 	    newArtC->count = 1;
-	    newArtC->info = key;
+	    newArtC->info = *(struct articleInfo **)key;
+	    
+	    printf("\t\tArtcile \"%s\" \"%s\" NOT found for word \"%s\", appending\n", newArtC->info->articleTitle, newArtC->info->articleURL, word);
+
 	    VectorAppend(articles, &newArtC);
 	  }
 	}
