@@ -559,7 +559,7 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
 	  } else {
 	    ArticleInfoFree(&artI);
 	  }
-	  struct articleInfo *key = existingArtI;
+	  struct articleInfo *key = *(struct articleInfo **)existingArtI;
 	  
 	  vector *articles = existingIndex->articles;
 	  int index = VectorSearch(articles, key, ArticleCountPointersCompareFunction, 0, false);
@@ -570,7 +570,7 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
 	  } else {
 	    struct articleCount *newArtC = malloc(sizeof(struct articleCount));
 	    newArtC->count = 1;
-	    newArtC->info = *(struct articleInfo **)key;
+	    newArtC->info = key;
 	    
 	    printf("\t\tArtcile \"%s\" \"%s\" NOT found for word \"%s\", appending\n", newArtC->info->articleTitle, newArtC->info->articleURL, word);
 
