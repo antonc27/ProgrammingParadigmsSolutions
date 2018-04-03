@@ -97,10 +97,26 @@ static int ArticleInfoHash(const void *elem, int numBuckets)
 }
 
 static int ArticleInfoCompareFunction(const void *elemAddr1, const void *elemAddr2) {
-  // TODO: compare urls too
-  char *first = ((struct articleInfo *)elemAddr1)->articleTitle;
-  char *second = ((struct articleInfo *)elemAddr2)->articleTitle;
-  return StringCompareFunction(&first, &second);
+  struct articleInfo *artI1 = (struct articleInfo *)elemAddr1;
+  struct articleInfo *artI2 = (struct articleInfo *)elemAddr2;
+  char *urlStr1 = artI1->articleURL;
+  char *urlStr2 = artI2->articleURL;
+  if (StringCompareFunction(&urlStr1, &urlStr2) == 0) {
+    return 0;
+  }
+  char *title1 = artI1->articleTitle;
+  char *title2 = artI2->articleTitle;
+  int titleCmp = StringCompareFunction(&title1, &title2);
+  if (titleCmp == 0) {
+    url u1,u2;
+    URLNewAbsolute(&u1, urlStr1);
+    URLNewAbsolute(&u2, urlStr2);
+    int serverNameCmp = StringCompareFunction(&u1.serverName, &u2.serverName);
+    URLDispose(&u1);
+    URLDispose(&u2);
+    return serverNameCmp;
+  }
+  return titleCmp;
 }
 
 static void ArticleInfoFree(void *elem) {
@@ -496,6 +512,19 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
   int numWords = 0;
   char word[1024];
   char longestWord[1024] = {'\0'};
+  
+  struct articleInfo artI;
+  artI.articleTitle = strdup(articleTitle);
+  artI.articleURL = strdup(articleURL);
+
+  struct articleInfo *existingArtI = HashSetLookup(indexedArticles, &artI);
+  //ArticleInfoFree(&artI);
+  if (existingArtI != NULL) {
+    printf("[Ignoring \"%s\": we've seen it before.]", articleTitle);
+    ArticleInfoFree(&artI);
+    return;
+  }
+  ArticleInfoFree(&artI);
 
   while (STNextToken(st, word, sizeof(word))) {
     if (strcasecmp(word, "<") == 0) {
