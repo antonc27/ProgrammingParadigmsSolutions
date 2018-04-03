@@ -111,13 +111,8 @@ static void ArticleInfoFree(void *elem) {
 
 static int ArticleCountPointersCompareFunction(const void *elemAddr1, const void *elemAddr2) {
   struct artcileInfo *artI = (struct artcileInfo *)elemAddr1;
-  struct articleCount *artC = *(struct articleCount **)elemAddr2;
+  struct articleCount *artC = (struct articleCount *)elemAddr2;
   return (void *)artI - (void *)artC->info;
-}
-
-static void ArticleCountFree(void *elem) {
-  struct articleCount *artC = *(struct articleCount **)elem;
-  free(artC);
 }
 
 /**
@@ -535,13 +530,13 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
 	struct index *existingIndex = HashSetLookup(indexedWords, &idx);
 	if (existingIndex == NULL) {
 	  idx.articles = malloc(sizeof(vector));
-	  VectorNew(idx.articles, sizeof(struct articleCount *), ArticleCountFree, 0);
+	  VectorNew(idx.articles, sizeof(struct articleCount), NULL, 0);
 	  
-	  struct articleCount *artC = malloc(sizeof(struct articleCount));
-	  artC->count = 1;
-	  artC->info = IndexArticleInfo(articleTitle, articleURL, indexedArticles);
+	  struct articleCount artC;
+	  artC.count = 1;
+	  artC.info = IndexArticleInfo(articleTitle, articleURL, indexedArticles);
 
-	  printf("Indexing 0x%08lx \"%s\" \"%s\" \"%s\"\n", (long unsigned int)artC, word, artC->info->articleTitle, artC->info->articleURL);
+	  printf("Indexing 0x%08lx \"%s\" \"%s\" \"%s\"\n", (long unsigned int)&artC, word, artC.info->articleTitle, artC.info->articleURL);
 	  
 	  VectorAppend(idx.articles, &artC);
 	  
@@ -553,15 +548,15 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
 	  vector *articles = existingIndex->articles;
 	  int index = VectorSearch(articles, key, ArticleCountPointersCompareFunction, 0, false);
 	  if (index != -1) {
-	    struct articleCount *artC = *(struct articleCount **)VectorNth(articles, index);
+	    struct articleCount *artC = (struct articleCount *)VectorNth(articles, index);
 	    printf("\t\tArtcile \"%s\" \"%s\" with count %d found for word \"%s\"\n", artC->info->articleTitle, artC->info->articleURL, artC->count, word);
 	    artC->count++;
 	  } else {
-	    struct articleCount *newArtC = malloc(sizeof(struct articleCount));
-	    newArtC->count = 1;
-	    newArtC->info = key;
+	    struct articleCount newArtC;
+	    newArtC.count = 1;
+	    newArtC.info = key;
 	    
-	    printf("\t\tArtcile \"%s\" \"%s\" NOT found for word \"%s\", appending\n", newArtC->info->articleTitle, newArtC->info->articleURL, word);
+	    printf("\t\tArtcile \"%s\" \"%s\" NOT found for word \"%s\", appending\n", newArtC.info->articleTitle, newArtC.info->articleURL, word);
 
 	    VectorAppend(articles, &newArtC);
 	  }
@@ -618,7 +613,7 @@ static void ProcessResponse(const char *word, hashset *stopWords, hashset *index
       printf("Nice! We found %d articles that include the word \"%s\".\n\n", n, idx->word);
       
       for (int i = 0; i < n; i++) {
-	struct articleCount *artC = *(struct articleCount **)VectorNth(v, i);
+	struct articleCount *artC = (struct articleCount *)VectorNth(v, i);
 	struct articleInfo *artI = artC->info;
 	printf("\t%d.) \"%s\" [search term occurs %d times]\n", i+1, artI->articleTitle, artC->count);
 	printf("\t     \"%s\"\n", artI->articleURL);
