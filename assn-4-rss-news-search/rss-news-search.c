@@ -85,7 +85,6 @@ static int IndexCompareFunction(const void *elemAddr1, const void *elemAddr2) {
 
 static void IndexFree(void *elem) {
   struct index *idx = (struct index *)elem;
-  printf("Freeing index \"%s\" of count %d\n", idx->word, VectorLength(idx->articles));
   VectorDispose(idx->articles);
   free(idx->articles);
   StringFree(&idx->word);
@@ -122,7 +121,6 @@ static int ArticleInfoCompareFunction(const void *elemAddr1, const void *elemAdd
 
 static void ArticleInfoFree(void *elem) {
   struct articleInfo *artI = (struct articleInfo *)elem;
-  printf("\tFreeing article info 0x%08lx \"%s\" \"%s\"\n", (long unsigned int)artI, artI->articleTitle, artI->articleURL);
   StringFree(&artI->articleTitle);
   StringFree(&artI->articleURL);
 }
@@ -484,7 +482,7 @@ static void ParseArticle(const char *articleTitle, const char *articleDescriptio
   switch (urlconn.responseCode) {
       case 0: printf("Unable to connect to \"%s\".  Domain name or IP address is nonexistent.\n", articleURL);
 	      break;
-      case 200: printf("Scanning \"%s\" from \"http://%s\"\n", articleTitle, u.serverName);
+      case 200: 
 	        STNew(&st, urlconn.dataStream, kTextDelimiters, false);
 		ScanArticle(&st, articleTitle, articleDescription, articleURL, stopWords, indexedWords, indexedArticles);
 		STDispose(&st);
@@ -516,9 +514,7 @@ static void ParseArticle(const char *articleTitle, const char *articleDescriptio
 
 static void ScanArticle(streamtokenizer *st, const char *articleTitle, const char *unused, const char *articleURL, hashset *stopWords, hashset *indexedWords, hashset *indexedArticles)
 {
-  int numWords = 0;
   char word[1024];
-  char longestWord[1024] = {'\0'};
   
   struct articleInfo artI;
   artI.articleTitle = strdup(articleTitle);
@@ -529,6 +525,8 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
   if (existingArtI != NULL) {
     printf("[Ignoring \"%s\": we've seen it before.]\n", articleTitle);
     return;
+  } else {
+    printf("[\"%s\"] Indexing \"%s\"\n", articleURL, articleTitle);
   }
 
   while (STNextToken(st, word, sizeof(word))) {
@@ -538,22 +536,10 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
       RemoveEscapeCharacters(word);
       char *dummy = word;
       if (WordIsWellFormed(word) && HashSetLookup(stopWords, &dummy) == NULL) {
-	numWords++;
-	if (strlen(word) > strlen(longestWord))
-	  strcpy(longestWord, word);
-
-	printf("Scanning word \"%s\" for artcile \"%s\" \"%s\"\n\n", word, articleTitle, articleURL);
-	
 	IndexWordAndArticle(word, articleTitle, articleURL, indexedWords, indexedArticles);
       }
     }
   }
-
-  printf("\tWe counted %d well-formed words [including duplicates].\n", numWords);
-  printf("\tThe longest word scanned was \"%s\".", longestWord);
-  if (strlen(longestWord) >= 15 && (strchr(longestWord, '-') == NULL)) 
-    printf(" [Ooooo... long word!]");
-  printf("\n");
 }
 
 static struct articleInfo *IndexArticleInfo(const char *articleTitle, const char *articleURL, hashset *indexedArticles)
@@ -586,8 +572,6 @@ static void IndexWordAndArticle(const char *word, const char *articleTitle, cons
     struct articleCount artC;
     artC.count = 1;
     artC.info = IndexArticleInfo(articleTitle, articleURL, indexedArticles);
-
-    printf("Indexing 0x%08lx \"%s\" \"%s\" \"%s\"\n", (long unsigned int)&artC, word, artC.info->articleTitle, artC.info->articleURL);
 	  
     VectorAppend(idx.articles, &artC);
     HashSetEnter(indexedWords, &idx);
@@ -599,14 +583,11 @@ static void IndexWordAndArticle(const char *word, const char *articleTitle, cons
     int index = VectorSearch(articles, key, ArticleCountPointersCompareFunction, 0, false);
     if (index != -1) {
       struct articleCount *artC = (struct articleCount *)VectorNth(articles, index);
-      printf("\t\tArtcile \"%s\" \"%s\" with count %d found for word \"%s\"\n", artC->info->articleTitle, artC->info->articleURL, artC->count, word);
       artC->count++;
     } else {
       struct articleCount newArtC;
       newArtC.count = 1;
       newArtC.info = key;
-	    
-      printf("\t\tArtcile \"%s\" \"%s\" NOT found for word \"%s\", appending\n", newArtC.info->articleTitle, newArtC.info->articleURL, word);
 
       VectorAppend(articles, &newArtC);
     }
