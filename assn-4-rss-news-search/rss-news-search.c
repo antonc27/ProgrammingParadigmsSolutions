@@ -57,6 +57,7 @@ static void StringFree(void *elem) {
 
 struct index {
   char *word;
+  bool sorted;
   vector *articles;
 };
 
@@ -130,6 +131,12 @@ static int ArticleCountPointersCompareFunction(const void *elemAddr1, const void
   struct artcileInfo *artI = (struct artcileInfo *)elemAddr1;
   struct articleCount *artC = (struct articleCount *)elemAddr2;
   return (void *)artI - (void *)artC->info;
+}
+
+int ArticleCountCompareFunction(const void *elemAddr1, const void *elemAddr2) {
+  struct articleCount *artC1 = (struct articleCount *)elemAddr1;
+  struct articleCount *artC2 = (struct articleCount *)elemAddr2;
+  return artC2->count - artC1->count;
 }
 
 /**
@@ -569,6 +576,7 @@ static void IndexWordAndArticle(const char *word, const char *articleTitle, cons
 {
   struct index idx;
   idx.word = strdup(word);
+  idx.sorted = false;
 	
   struct index *existingIndex = HashSetLookup(indexedWords, &idx);
   if (existingIndex == NULL) {
@@ -645,7 +653,13 @@ static void ProcessResponse(const char *word, hashset *stopWords, hashset *index
       int n = VectorLength(v);
       printf("Nice! We found %d articles that include the word \"%s\".\n\n", n, idx->word);
       
-      for (int i = 0; i < n; i++) {
+      if (!idx->sorted) {
+	VectorSort(v, ArticleCountCompareFunction);
+	idx->sorted = true;
+      }
+
+      int maxN = (n > 10) ? 10 : n;
+      for (int i = 0; i < maxN; i++) {
 	struct articleCount *artC = (struct articleCount *)VectorNth(v, i);
 	struct articleInfo *artI = artC->info;
 	printf("\t%d.) \"%s\" [search term occurs %d times]\n", i+1, artI->articleTitle, artC->count);
