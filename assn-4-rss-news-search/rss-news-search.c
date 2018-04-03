@@ -484,6 +484,21 @@ static void ParseArticle(const char *articleTitle, const char *articleDescriptio
   URLDispose(&u);
 }
 
+static struct articleInfo *IndexArticleInfo(const char *articleTitle, const char *articleURL, hashset *indexedArticles) {
+  struct articleInfo *artI = malloc(sizeof(struct articleInfo));
+  artI->articleTitle = strdup(articleTitle);
+  artI->articleURL = strdup(articleURL);
+
+  struct articleInfo *existingArtI = HashSetLookup(indexedArticles, &artI);
+  if (existingArtI == NULL) {
+    HashSetEnter(indexedArticles, &artI);
+    existingArtI = HashSetLookup(indexedArticles, &artI);
+  } else {
+    ArticleInfoFree(&artI);
+  }
+  return *(struct articleInfo **)existingArtI;
+}
+
 /**
  * Function: ScanArticle
  * ---------------------
@@ -526,19 +541,7 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
 	  
 	  struct articleCount *artC = malloc(sizeof(struct articleCount));
 	  artC->count = 1;
-
-	  struct articleInfo *artI = malloc(sizeof(struct articleInfo));
-	  artI->articleTitle = strdup(articleTitle);
-	  artI->articleURL = strdup(articleURL);
-	  
-	  struct articleInfo *existingArtI = HashSetLookup(indexedArticles, &artI);
-	  if (existingArtI == NULL) {
-	    HashSetEnter(indexedArticles, &artI);
-	    existingArtI = HashSetLookup(indexedArticles, &artI);
-	  } else {
-	    ArticleInfoFree(&artI);
-	  }
-	  artC->info = *(struct articleInfo **)existingArtI;
+	  artC->info = IndexArticleInfo(articleTitle, articleURL, indexedArticles);
 
 	  printf("Indexing 0x%08lx \"%s\" \"%s\" \"%s\"\n", (long unsigned int)artC, word, artC->info->articleTitle, artC->info->articleURL);
 	  
@@ -548,19 +551,7 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
 	} else {
 	  free(idx.word);
 
-	  struct articleInfo *artI = malloc(sizeof(struct articleInfo));
-	  artI->articleTitle = strdup(articleTitle);
-	  artI->articleURL = strdup(articleURL);
-	  
-	  struct articleInfo *existingArtI = HashSetLookup(indexedArticles, &artI);
-	  if (existingArtI == NULL) {
-	    HashSetEnter(indexedArticles, &artI);
-	    existingArtI = HashSetLookup(indexedArticles, &artI);
-	  } else {
-	    ArticleInfoFree(&artI);
-	  }
-	  struct articleInfo *key = *(struct articleInfo **)existingArtI;
-	  
+	  struct articleInfo *key = IndexArticleInfo(articleTitle, articleURL, indexedArticles);	  
 	  vector *articles = existingIndex->articles;
 	  int index = VectorSearch(articles, key, ArticleCountPointersCompareFunction, 0, false);
 	  if (index != -1) {
