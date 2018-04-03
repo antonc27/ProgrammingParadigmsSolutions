@@ -93,7 +93,7 @@ static void IndexFree(void *elem) {
 static int ArticleInfoHash(const void *elem, int numBuckets)  
 {
   struct articleInfo *artI = (struct articleInfo *)elem;
-  return StringHash(&artI->articleTitle, numBuckets);
+  return StringHash(&artI->articleURL, numBuckets);
 }
 
 static int ArticleInfoCompareFunction(const void *elemAddr1, const void *elemAddr2) {
@@ -518,13 +518,11 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
   artI.articleURL = strdup(articleURL);
 
   struct articleInfo *existingArtI = HashSetLookup(indexedArticles, &artI);
-  //ArticleInfoFree(&artI);
+  ArticleInfoFree(&artI);
   if (existingArtI != NULL) {
-    printf("[Ignoring \"%s\": we've seen it before.]", articleTitle);
-    ArticleInfoFree(&artI);
+    printf("[Ignoring \"%s\": we've seen it before.]\n", articleTitle);
     return;
   }
-  ArticleInfoFree(&artI);
 
   while (STNextToken(st, word, sizeof(word))) {
     if (strcasecmp(word, "<") == 0) {
