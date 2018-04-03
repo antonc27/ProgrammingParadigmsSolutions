@@ -43,7 +43,7 @@ static int StringHash(const void *elem, int numBuckets)
 }
 
 static int StringCompareFunction(const void *elemAddr1, const void *elemAddr2) {
-  return strcmp(*(char **)elemAddr1, *(char **)elemAddr2);
+  return strcasecmp(*(char **)elemAddr1, *(char **)elemAddr2);
 }
 
 static void StringFree(void *elem) {
