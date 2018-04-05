@@ -15,14 +15,9 @@ void SSANew(sparsestringarray *ssa, int arrayLength, int groupSize) {
     ssa->arrayLength = arrayLength;
     ssa->groupSize = groupSize;
     for (int i = 0; i < numGroups; i++) {
-        group g;
-        g.bitmap = malloc(groupSize * sizeof(bool));
-        for (int j = 0; j < groupSize; j++) {
-            g.bitmap[j] = false;
-        }
-        VectorNew(&g.strings, sizeof(char **), StringFreeFunction, 0);
-        ssa->groups[i] = g;
-//        memcpy(&ssa->groups[i], &g, sizeof(group));
+        ssa->groups[i].bitmap = malloc(groupSize * sizeof(bool));
+        bzero(ssa->groups[i].bitmap, groupSize * sizeof(bool));
+        VectorNew(&ssa->groups[i].strings, sizeof(char **), StringFreeFunction, 1);
     }
 }
 
