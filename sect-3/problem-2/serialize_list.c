@@ -28,12 +28,26 @@ void appendToList(node **list, char *str) {
 
 int *serializeList(const void *list) {
     int *sl = malloc(sizeof(int));
-    if (list == NULL) {
-        *sl = 0;
-        return sl;
+    *sl = 0;
+    int length = 0;
+    
+    int *current = (int *)list;
+    char *str = NULL;
+    int len = 0;
+    while (current != NULL) {
+        str = (char *)current + sizeof(int *);
+        len = (int)strlen(str);
+        //printf("%d %s\n", len, str);
+        
+        sl = realloc(sl, sizeof(int) + (length + len + 1) * sizeof(char));
+        char *dest = (char *)sl + sizeof(int) + length * sizeof(char);
+        strcpy(dest, str);
+        
+        length += len + 1;
+        *sl += 1;
+        
+        current = *(int **)current;
     }
-    
-    
     
     return sl;
 }
@@ -50,6 +64,6 @@ int main(int argc, const char * argv[]) {
     
     int *serialList = serializeList(list);
     
-    printf("Hello, World!\n");
+    printf("Serialized list of %d strings\n", *serialList);
     return 0;
 }
