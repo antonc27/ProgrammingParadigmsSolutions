@@ -31,7 +31,7 @@ int *serializeList(const void *list) {
     *sl = 0;
     int length = 0;
     
-    int *current = (int *)list;
+    const void **current = (const void **)list;
     char *str = NULL;
     int len = 0;
     while (current != NULL) {
@@ -46,7 +46,7 @@ int *serializeList(const void *list) {
         length += len + 1;
         *sl += 1;
         
-        current = *(int **)current;
+        current = (const void **)*current;
     }
     
     return sl;
