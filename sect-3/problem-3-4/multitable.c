@@ -27,23 +27,20 @@ void MultiTableEnter(multitable *mt, const void *keyAddr, const void *valueAddr)
 }
 
 typedef struct {
-    multitable *mt;
     MultiTableMapFunction map;
     void *auxData;
+    int keySize;
 } helpAuxData;
 
 void hashSetMapFunction(void *elemAddr, void *setAuxData) {
     helpAuxData *had = (helpAuxData *)setAuxData;
-    vector *value = (vector *)((char *)elemAddr + had->mt->keySize);
+    vector *value = (vector *)((char *)elemAddr + had->keySize);
     for (int i = 0; i < VectorLength(value); i++) {
         had->map(elemAddr, VectorNth(value, i), had->auxData);
     }
 }
 
 void MultiTableMap(multitable *mt, MultiTableMapFunction map, void *auxData) {
-    helpAuxData had;
-    had.mt = mt;
-    had.map = map;
-    had.auxData = auxData;
+    helpAuxData had = {map, auxData, mt->keySize};
     HashSetMap(&mt->mappings, hashSetMapFunction, &had);
 }
