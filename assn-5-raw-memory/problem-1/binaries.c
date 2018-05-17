@@ -1,5 +1,15 @@
 #include <stdio.h>
 
+typedef unsigned char *bytes_pointer;
+
+void print_bytes(bytes_pointer bt, size_t size) {
+  size_t i;
+  for (i = 0; i < size; i++) {
+    printf(" %.2x", bt[i]);
+  }
+  printf("\n");
+}
+
 void PrintByte(long int num, int size) {
   int n = size*8;
   char str[n+1];
@@ -36,6 +46,11 @@ void OverflowTest() {
   */
   PrintByte(s, sizeof(s));
   printf("\n");
+  
+  print_bytes((bytes_pointer) &s, sizeof(short));
+
+  int i = 12345;
+  print_bytes((bytes_pointer) &i, sizeof(int));
 
   /*
   short s = 0;
