@@ -22,62 +22,39 @@ void print_bytes(bytes_pointer bt, size_t size) {
   printf("\n");
 }
 
-void PrintByte(long int num, int size) {
-  int n = size*8;
-  char str[n+1];
-  str[n] = '\0';
-  int count = 0;
-  while (count < n) {
-    str[n - count - 1] = (num & 1) ? '1' : '0';
-    num = num >> 1;
-    count++;
+void print_short(short x) {
+  print_bytes((bytes_pointer) &x, sizeof(short));
+}
+
+bool tadd_ok(short x, short y) {
+  short sum = x+y;
+  if (x > 0 && y > 0 && sum <= 0) {
+    return false;
+  } else if (x < 0 && y < 0 && sum >= 0) {
+    return false;
   }
-  printf("%s", str);
+  return true;
+}
+
+void print_short_info(char *desc, short s) {
+  printf("%s dec %hd\n", desc, s);
+  printf("%s hex", desc);
+  print_short(s);
+  printf("\n");
+}
+
+void test_short_overflow(short s1, short s2) {
+  printf("--- Testing shorts s1(%hd)+s2(%hd) for overflow ---\n", s1, s2);
+  print_short_info("s1", s1);
+  print_short_info("s2", s2);
+  print_short_info("s1+s2", s1+s2);
+  printf(tadd_ok(s1, s2) ? "Not overflows\n" : "Overflows\n");
+  printf("--- ---\n");
 }
 
 void OverflowTest() {
-  //  printf("%lu %lu\n", sizeof(short), sizeof(unsigned short));
-
-  short minShort = -(((unsigned short)~0) / 2 + 1);
-  printf("%hd %hd\n", minShort, (short)(minShort-1));
-
-  printf("%hd\n", (short)(~0));
-
-  short s = (short)2;//minShort;
-  /*
-  int n = sizeof(s)*8;
-  char str[n+1];
-  str[n] = '\0';
-  int count = 0;
-  while (count < n) {
-    str[n - count - 1] = (s & 1) ? '1' : '0';
-    s = s >> 1;
-    count++;
-  }
-  printf("%s", str);
-  */
-  PrintByte(s, sizeof(s));
-  printf("\n");
-  
-  print_bytes((bytes_pointer) &s, sizeof(short));
-
-  int i = 12345;
-  print_bytes((bytes_pointer) &i, sizeof(int));
-
-  /*
-  short s = 0;
-  while ((short)(s-1) < s) {
-    printf("%hd %hd %hd\n", s, (short)(s-1), (short)(s-2));
-    //    printf("%d\n", s);
-    s--;
-  }
-  */
-
-  /*
-  int i;
-  for (i = 0; i <= maxShort; i++)
-    printf("%d\n", i);
-  */
+  test_short_overflow(20000, 10000);
+  test_short_overflow((short)((1<<15)-1), 1);
 }
 
 int main() {
