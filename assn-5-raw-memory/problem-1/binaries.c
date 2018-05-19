@@ -1,11 +1,23 @@
 #include <stdio.h>
+#include <stdbool.h>
+
+bool is_little_endian() {
+  int i = 1;
+  return *(unsigned char *)&i == 1;
+}
 
 typedef unsigned char *bytes_pointer;
 
 void print_bytes(bytes_pointer bt, size_t size) {
   size_t i;
-  for (i = 0; i < size; i++) {
-    printf(" %.2x", bt[i]);
+  if (is_little_endian()) {
+    for (i = size; i > 0; i--) {
+      printf(" %.2x", bt[i-1]);
+    }
+  } else { 
+    for (i = 0; i < size; i++) {
+      printf(" %.2x", bt[i]);
+    }
   }
   printf("\n");
 }
