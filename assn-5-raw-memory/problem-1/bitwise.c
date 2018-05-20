@@ -2,7 +2,7 @@
 #include <stdbool.h>
 
 int remainder_devided_by_4(int x) {
-  return x & ~((x>>2)<<2);
+  return x & 3;
 }
 
 void TestBitwiseDevisionBy4(int x) {
